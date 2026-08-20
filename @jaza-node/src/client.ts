@@ -18,7 +18,7 @@ export class HttpClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.secretKey}`,
       Accept: 'application/json',
-      'User-Agent': `@jaza/node/${VERSION}`,
+      'User-Agent': `@jazadev/node/${VERSION}`,
     };
     if (body !== undefined) {
       headers['Content-Type'] = 'application/json';

@@ -1,5 +1,5 @@
 {
-  "name": "@jaza/node",
+  "name": "@jazadev/node",
   "version": "0.1.0",
   "description": "Official Node.js SDK for Jaza prepaid / metered billing",
   "license": "MIT",
@@ -42,9 +42,16 @@
     "momo",
     "sdk"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jaza-dev/packages.git",
+    "url": "https://github.com/josumung999/jaza-packages.git",
     "directory": "@jaza-node"
+  },
+  "homepage": "https://github.com/josumung999/jaza-packages/tree/main/@jaza-node",
+  "bugs": {
+    "url": "https://github.com/josumung999/jaza-packages/issues"
   }
 }

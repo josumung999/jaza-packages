@@ -1,17 +1,17 @@
-# `@jaza/node`
+# `@jazadev/node`
 
 Official Node.js backend SDK for [Jaza](https://jaza.dev) prepaid / metered billing.
 
 ## Install
 
 ```bash
-npm install @jaza/node
+npm install @jazadev/node
 ```
 
 ## Quickstart
 
 ```ts
-import { Jaza } from '@jaza/node';
+import { Jaza } from '@jazadev/node';
 
 const jaza = new Jaza({
   secretKey: process.env.JAZA_SECRET_KEY!, // jz_test_sk_…
