@@ -1,0 +1,50 @@
+{
+  "name": "@jaza/node",
+  "version": "0.1.0",
+  "description": "Official Node.js SDK for Jaza prepaid / metered billing",
+  "license": "MIT",
+  "author": "Jaza",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "jaza",
+    "billing",
+    "credits",
+    "momo",
+    "sdk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaza-dev/packages.git",
+    "directory": "@jaza-node"
+  }
+}
