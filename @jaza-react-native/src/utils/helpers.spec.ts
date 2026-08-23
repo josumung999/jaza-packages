@@ -28,14 +28,14 @@ describe('formatCurrencyAmount', () => {
     expect(formatCurrencyAmount(9, 'USD', 2)).toBe('$9.00');
   });
 
-  it('formats 0-decimal CDF as integer', () => {
-    const formatted = formatCurrencyAmount('13158', 'CDF', 0);
-    expect(formatted).not.toContain('.');
-    expect(formatted).toContain('13,158');
+  it('formats 0-decimal KES as integer even if catalog said 2', () => {
+    const formatted = formatCurrencyAmount('650.35', 'KES', 2);
+    expect(formatted).not.toMatch(/\.\d/);
   });
 
-  it('resolveCurrencyFractionDigits uses catalog decimals', () => {
-    expect(resolveCurrencyFractionDigits('CDF', 0)).toBe(0);
+  it('resolveCurrencyFractionDigits is USD=2 else 0', () => {
+    expect(resolveCurrencyFractionDigits('CDF')).toBe(0);
+    expect(resolveCurrencyFractionDigits('KES')).toBe(0);
     expect(resolveCurrencyFractionDigits('USD')).toBe(2);
   });
 });

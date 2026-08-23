@@ -44,18 +44,10 @@ export function PaymentStep() {
     return selectedCountry?.currencies ?? [];
   }, [predict, selectedCountry]);
 
-  const selectedCurrency = currencyOptions.find(
-    (c) => c.code === selectedCurrencyCode,
-  );
-
   const showCurrencyPicker = currencyOptions.length > 1;
 
   const formattedQuote = quote
-    ? formatCurrencyAmount(
-        quote.totalLocal,
-        quote.currencyCode,
-        selectedCurrency?.decimals,
-      )
+    ? formatCurrencyAmount(quote.totalLocal, quote.currencyCode)
     : null;
 
   const buyLabel = quote
@@ -146,14 +138,9 @@ export function PaymentStep() {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: spacing.xs,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.outlineVariant,
     },
     currencyCode: {
-      color: colors.onSurface,
+      color: colors.primaryContainer,
       fontSize: 18,
       fontWeight: '600',
     },
@@ -222,7 +209,7 @@ export function PaymentStep() {
             <Text style={styles.dialText}>
               +{selectedCountry?.dialCode ?? '…'}
             </Text>
-            <Icon name="expand-more" size={24} color={colors.onSurfaceVariant} />
+            <Icon name="expand-more" size={24} color={colors.primaryContainer} />
           </Pressable>
         }
         trailing={
@@ -250,7 +237,7 @@ export function PaymentStep() {
               <Text style={styles.currencyCode}>
                 {selectedCurrencyCode ?? '—'}
               </Text>
-              <Icon name="expand-more" size={20} color={colors.onSurfaceVariant} />
+              <Icon name="expand-more" size={20} color={colors.primaryContainer} />
             </Pressable>
           ) : (
             <Text style={styles.currencyCode}>

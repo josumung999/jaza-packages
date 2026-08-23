@@ -80,26 +80,21 @@ export function formatUsd(priceUsd: string): string {
   return formatCurrencyAmount(n, 'USD', 2);
 }
 
-/** Fraction digits for display — mirrors catalog decimals / USD rules. */
-export function resolveCurrencyFractionDigits(
-  currencyCode: string,
-  decimals?: number,
-): number {
-  if (decimals !== undefined) return decimals;
-  if (currencyCode.toUpperCase() === 'USD') return 2;
-  return 2;
+/** Fraction digits: USD = 2, every other currency = 0 (MoMo / PawaPay). */
+export function resolveCurrencyFractionDigits(currencyCode: string): number {
+  return currencyCode.toUpperCase() === 'USD' ? 2 : 0;
 }
 
 export function formatCurrencyAmount(
   amount: string | number,
   currencyCode: string,
-  decimals?: number,
+  _decimals?: number,
 ): string {
   const n = typeof amount === 'string' ? Number(amount) : amount;
   const code = currencyCode.toUpperCase();
   if (Number.isNaN(n)) return `${amount} ${code}`;
 
-  const fractionDigits = resolveCurrencyFractionDigits(code, decimals);
+  const fractionDigits = resolveCurrencyFractionDigits(code);
 
   try {
     return new Intl.NumberFormat('en-US', {
