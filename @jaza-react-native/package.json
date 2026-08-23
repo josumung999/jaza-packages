@@ -1,7 +1,7 @@
 {
   "name": "@jazadev/react-native",
   "version": "0.1.0",
-  "description": "Official React Native / Expo SDK for Jaza top-up (MoMo credits)",
+  "description": "Official React Native / Expo SDK for Jaza",
   "license": "MIT",
   "author": "Jaza",
   "type": "module",

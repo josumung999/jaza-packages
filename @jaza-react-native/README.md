@@ -1,13 +1,13 @@
 # `@jazadev/react-native`
 
-Official React Native / Expo SDK for Jaza MoMo top-up (credit bundles → PawaPay deposit).
+Official React Native / Expo SDK for Jaza.
 
-Pairs with [`@jazadev/node`](https://www.npmjs.com/package/@jazadev/node) on your backend: the server issues the top-up JWT; this SDK runs the public checkout UI in your app.
+This package runs in your **mobile app**. It uses your publishable key plus a short-lived top-up token from **your backend** — never your secret key.
 
 ## Install
 
 ```bash
-npm install @jazadev/react-native @jazadev/node
+npm install @jazadev/react-native
 ```
 
 **Peer dependencies** (Expo):
@@ -15,6 +15,15 @@ npm install @jazadev/react-native @jazadev/node
 ```bash
 npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context @gorhom/bottom-sheet @expo/vector-icons
 ```
+
+## Backend vs app
+
+| Layer | Package | Role |
+|-------|---------|------|
+| **Your server** | [`@jazadev/node`](https://www.npmjs.com/package/@jazadev/node) (optional) | Secret-key API: create customers, issue top-up JWTs, read wallet balance |
+| **Your app** | `@jazadev/react-native` | Public-key UI: bundles, checkout sheet, payment status |
+
+The React Native SDK does **not** depend on `@jazadev/node`. Your app talks to **your** API; your server talks to Jaza with the secret key. Many teams use `@jazadev/node` on the server for convenience, but any HTTP client works.
 
 ## App setup
 
@@ -68,10 +77,10 @@ In `app.json` / `AndroidManifest`, use `android:windowSoftInputMode="adjustResiz
 
 ## Flow
 
-1. User taps **Top up** → your `onRequestToken()` calls your backend → `@jazadev/node` `topUp()` → JWT
+1. User taps **Top up** → `onRequestToken()` calls **your backend** → your server returns a top-up JWT
 2. Sheet opens → bundles + balance
-3. User picks bundle → phone + country dial code → PawaPay predict → currency + local amount quote
-4. User confirms → deposit + poll until `COMPLETED` / failure
+3. User picks bundle → phone, country, currency → provider detection + local amount quote
+4. User confirms → payment starts → poll until success or failure
 5. Balance refreshes via your `getBalance()` callback
 
 ## Exports
