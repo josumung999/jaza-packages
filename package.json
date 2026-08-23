@@ -4,7 +4,8 @@
   "packageManager": "npm@10.9.2",
   "workspaces": [
     "@jaza-node",
-    "@jaza-react-native"
+    "@jaza-react-native",
+    "@jaza-react-native/example"
   ],
   "scripts": {
     "build": "turbo run build",

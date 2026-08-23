@@ -6,6 +6,10 @@ Use this in your **mobile app** with your publishable key (`jz_*_pk_*`) and a sh
 
 Server-side calls (create customer, issue top-up JWT, read balance) use [`@jazadev/node`](https://www.npmjs.com/package/@jazadev/node) or any HTTP client with your secret key.
 
+### Try the sample
+
+A private Expo app lives in [`example/`](./example). It demos sign-in (local JSON + Jaza customer), balance, and top-up with Expo Router API routes. See [example/README.md](./example/README.md). It is **not** published with this package.
+
 ---
 
 ## 1. Install

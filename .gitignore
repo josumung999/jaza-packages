@@ -3,3 +3,7 @@ dist
 .turbo
 *.log
 .DS_Store
+.env
+@jaza-react-native/example/.env
+@jaza-react-native/example/data/users.json
+@jaza-react-native/example/.expo
