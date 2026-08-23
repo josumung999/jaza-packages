@@ -5,7 +5,7 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import { BalanceValueSkeleton } from '../components/BalanceValueSkeleton.js';
+import { BalanceCardSkeleton } from '../components/BalanceCardSkeleton.js';
 import { Icon } from '../components/Icon.js';
 import { useJaza } from '../provider/JazaContext.js';
 import { formatCredits } from '../utils/helpers.js';
@@ -53,20 +53,18 @@ export function JazaBalanceWidget({ style }: JazaBalanceWidgetProps) {
     },
   });
 
+  if (balanceLoading && balance === null) {
+    return <BalanceCardSkeleton theme={theme} style={style} />;
+  }
+
   return (
     <View style={styles.card}>
       <Text style={styles.label}>Current Balance</Text>
       <View style={styles.row}>
-        {balanceLoading && balance === null ? (
-          <BalanceValueSkeleton theme={theme} />
-        ) : (
-          <>
-            <Icon name="bolt" size={28} color={colors.primary} />
-            <Text style={styles.value}>
-              {balance !== null ? formatCredits(balance) : '—'}
-            </Text>
-          </>
-        )}
+        <Icon name="bolt" size={28} color={colors.primary} />
+        <Text style={styles.value}>
+          {balance !== null ? formatCredits(balance) : '—'}
+        </Text>
       </View>
       {balanceError ? (
         <Text style={styles.error}>{balanceError}</Text>

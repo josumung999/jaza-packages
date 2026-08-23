@@ -4,7 +4,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { BalanceValueSkeleton } from '../../components/BalanceValueSkeleton.js';
+import { BalanceCardSkeleton } from '../../components/BalanceCardSkeleton.js';
 import { BundleListSkeleton } from '../../components/BundleListSkeleton.js';
 import { Icon } from '../../components/Icon.js';
 import { useJaza } from '../../provider/JazaContext.js';
@@ -144,21 +144,22 @@ export function OfferStep() {
 
   return (
     <View>
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Current Balance</Text>
-        <View style={styles.balanceRow}>
-          {balanceLoading && balance === null ? (
-            <BalanceValueSkeleton theme={theme} />
-          ) : (
-            <>
-              <Icon name="bolt" size={28} color={colors.primary} />
-              <Text style={styles.balanceValue}>
-                {balance !== null ? formatCredits(balance) : '—'}
-              </Text>
-            </>
-          )}
+      {balanceLoading && balance === null ? (
+        <BalanceCardSkeleton
+          theme={theme}
+          style={{ marginBottom: spacing.lg }}
+        />
+      ) : (
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>Current Balance</Text>
+          <View style={styles.balanceRow}>
+            <Icon name="bolt" size={28} color={colors.primary} />
+            <Text style={styles.balanceValue}>
+              {balance !== null ? formatCredits(balance) : '—'}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <Text style={styles.title}>Top-up Credits</Text>
 
