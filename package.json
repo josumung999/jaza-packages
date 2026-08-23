@@ -3,7 +3,8 @@
   "private": true,
   "packageManager": "npm@10.9.2",
   "workspaces": [
-    "@jaza-node"
+    "@jaza-node",
+    "@jaza-react-native"
   ],
   "scripts": {
     "build": "turbo run build",

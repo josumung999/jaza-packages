@@ -1,0 +1,73 @@
+{
+  "name": "@jazadev/react-native",
+  "version": "0.1.0",
+  "description": "Official React Native / Expo SDK for Jaza top-up (MoMo credits)",
+  "license": "MIT",
+  "author": "Jaza",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "react-native": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@gorhom/bottom-sheet": ">=5",
+    "@expo/vector-icons": ">=14",
+    "react": ">=18",
+    "react-native": ">=0.74",
+    "react-native-gesture-handler": ">=2",
+    "react-native-reanimated": ">=3",
+    "react-native-safe-area-context": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "@expo/vector-icons": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@expo/vector-icons": "^14.0.4",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "jaza",
+    "billing",
+    "credits",
+    "momo",
+    "expo",
+    "react-native",
+    "sdk"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/josumung999/jaza-packages.git",
+    "directory": "@jaza-react-native"
+  },
+  "homepage": "https://github.com/josumung999/jaza-packages/tree/main/@jaza-react-native",
+  "bugs": {
+    "url": "https://github.com/josumung999/jaza-packages/issues"
+  }
+}

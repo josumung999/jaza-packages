@@ -11,6 +11,7 @@ This Turborepo hosts publishable Jaza client libraries (starting with `@jazadev/
 | Package | Path | Description |
 |---------|------|-------------|
 | `@jazadev/node` | [`@jaza-node`](./@jaza-node) | Node.js backend SDK |
+| `@jazadev/react-native` | [`@jaza-react-native`](./@jaza-react-native) | Expo / React Native top-up UI SDK |
 
 ## Scripts
 

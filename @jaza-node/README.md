@@ -27,9 +27,9 @@ const customer = await jaza.createCustomer({
 
 // 2. Issue a top-up JWT for your frontend SDK
 const session = await jaza.topUp({ customerId: customer.id });
-// Pass session.token + jaza.publicKey to the client.
+// Pass session.token + jaza.publicKey to @jazadev/react-native (JazaProvider + JazaTopUpButton).
 // Frontend: X-Jaza-Public-Key + Authorization: Bearer <token>
-// → GET /v1/public/bundles (PawaPay deposits come later)
+// → bundles, predict, quote, deposits via @jazadev/react-native
 
 // 3. Meter usage
 await jaza.consume({

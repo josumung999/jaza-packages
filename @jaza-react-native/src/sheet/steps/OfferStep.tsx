@@ -1,0 +1,176 @@
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Icon } from '../../components/Icon.js';
+import { useJaza } from '../../provider/JazaContext.js';
+import type { Bundle } from '../../api/types.js';
+import { formatCredits, formatUsd } from '../../utils/helpers.js';
+
+export function OfferStep() {
+  const {
+    theme,
+    balance,
+    balanceLoading,
+    bundles,
+    bundlesLoading,
+    selectedBundle,
+    setSelectedBundle,
+    goToPayment,
+  } = useJaza();
+  const { colors, spacing, radius } = theme;
+
+  const styles = StyleSheet.create({
+    balanceCard: {
+      backgroundColor: colors.surfaceContainer,
+      borderRadius: radius.xl,
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+    },
+    balanceLabel: {
+      color: colors.onSurfaceVariant,
+      fontSize: 14,
+      marginBottom: spacing.xs,
+    },
+    balanceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    balanceValue: {
+      color: colors.onSurface,
+      fontSize: 48,
+      fontWeight: '700',
+    },
+    title: {
+      color: colors.onSurface,
+      fontSize: 24,
+      fontWeight: '600',
+      marginBottom: spacing.md,
+    },
+    bundle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing.md,
+      borderRadius: radius.xl,
+      backgroundColor: colors.bundleBg,
+      borderWidth: 1,
+      borderColor: colors.bundleBorder,
+      marginBottom: spacing.sm,
+    },
+    bundleSelected: {
+      borderColor: colors.bundleBorderSelected,
+      borderWidth: 2,
+    },
+    bundleLabel: {
+      color: colors.onSurface,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    bundleLabelSelected: {
+      color: colors.primaryContainer,
+    },
+    bundleSub: {
+      color: colors.onSurfaceVariant,
+      fontSize: 14,
+      marginTop: 2,
+    },
+    bundleCredits: {
+      color: colors.onSurface,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    bundlePrice: {
+      color: colors.onSurfaceVariant,
+      fontSize: 12,
+      fontFamily: 'monospace',
+    },
+    cta: {
+      backgroundColor: colors.primaryContainer,
+      borderRadius: radius.full,
+      paddingVertical: spacing.md,
+      marginTop: spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+    },
+    ctaText: {
+      color: colors.onPrimaryContainer,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    loading: { padding: spacing.xl, alignItems: 'center' },
+  });
+
+  const renderBundle = (bundle: Bundle) => {
+    const selected = selectedBundle?.id === bundle.id;
+    return (
+      <Pressable
+        key={bundle.id}
+        style={[styles.bundle, selected && styles.bundleSelected]}
+        onPress={() => setSelectedBundle(bundle)}
+      >
+        <View>
+          <Text
+            style={[styles.bundleLabel, selected && styles.bundleLabelSelected]}
+          >
+            {bundle.label ?? 'Bundle'}
+          </Text>
+          <Text style={styles.bundleSub}>
+            {formatCredits(bundle.credits)} credits
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={styles.bundleCredits}>
+            {formatCredits(bundle.credits)}
+          </Text>
+          <Text style={styles.bundlePrice}>{formatUsd(bundle.priceUsd)} USD</Text>
+        </View>
+      </Pressable>
+    );
+  };
+
+  return (
+    <View>
+      <View style={styles.balanceCard}>
+        <Text style={styles.balanceLabel}>Current Balance</Text>
+        <View style={styles.balanceRow}>
+          <Icon name="bolt" size={28} color={colors.primary} />
+          {balanceLoading && balance === null ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <Text style={styles.balanceValue}>
+              {balance !== null ? formatCredits(balance) : '—'}
+            </Text>
+          )}
+        </View>
+      </View>
+
+      <Text style={styles.title}>Top-up Credits</Text>
+
+      {bundlesLoading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : (
+        bundles.map(renderBundle)
+      )}
+
+      <Pressable
+        style={styles.cta}
+        onPress={goToPayment}
+        disabled={!selectedBundle}
+      >
+        <Text style={styles.ctaText}>
+          Continue with {selectedBundle?.label ?? 'bundle'}
+        </Text>
+        <Icon name="arrow-forward" size={20} color={colors.onPrimaryContainer} />
+      </Pressable>
+    </View>
+  );
+}
