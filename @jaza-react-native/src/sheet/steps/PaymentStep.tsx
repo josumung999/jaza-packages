@@ -111,11 +111,10 @@ export function PaymentStep() {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
-      paddingRight: spacing.sm,
     },
     dialText: {
       color: colors.primaryContainer,
-      fontSize: 28,
+      fontSize: 22,
       fontWeight: '700',
     },
     providerText: {

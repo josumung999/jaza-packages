@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import type { JazaTheme } from '../theme/tokens.js';
 
@@ -21,7 +22,13 @@ export function PhoneDigitInput({
   trailing,
 }: PhoneDigitInputProps) {
   const { colors, spacing } = theme;
+  const inputRef = useRef<{ focus: () => void } | null>(null);
+  const [focused, setFocused] = useState(false);
+
   const digits = value.replace(/\D/g, '').slice(0, MAX_DIGITS);
+  /** Next empty slot, or last slot when the number is complete. */
+  const activeIndex =
+    digits.length >= MAX_DIGITS ? MAX_DIGITS - 1 : digits.length;
 
   const styles = StyleSheet.create({
     label: {
@@ -34,60 +41,82 @@ export function PhoneDigitInput({
     row: {
       flexDirection: 'row',
       alignItems: 'center',
+      width: '100%',
       gap: spacing.sm,
     },
-    phoneInput: {
-      flex: 1,
-      fontSize: 28,
-      fontWeight: '600',
-      color: colors.primaryContainer,
-      paddingVertical: spacing.sm,
-    },
     slots: {
+      flex: 1,
       flexDirection: 'row',
+      alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: spacing.sm,
-      paddingHorizontal: spacing.xs,
+      minHeight: 40,
     },
     slot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.outlineVariant,
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    slotFilled: {
-      backgroundColor: colors.primary,
+    slotChar: {
+      fontSize: 22,
+      fontWeight: '600',
+      color: colors.onSurfaceVariant,
+      fontVariant: ['tabular-nums'],
+    },
+    slotCharFocused: {
+      color: colors.primaryContainer,
+    },
+    hiddenInput: {
+      position: 'absolute',
+      opacity: 0,
+      height: 1,
+      width: 1,
     },
   });
+
+  const focusInput = () => {
+    inputRef.current?.focus();
+  };
 
   return (
     <View>
       <Text style={styles.label}>Phone Number</Text>
-      <View style={styles.row}>
+      <Pressable style={styles.row} onPress={focusInput}>
         {dialPressable}
+        <View style={styles.slots} pointerEvents="none">
+          {Array.from({ length: MAX_DIGITS }, (_, i) => {
+            const char = digits[i];
+            const isFocused = focused && i === activeIndex;
+            return (
+              <View key={i} style={styles.slot}>
+                <Text
+                  style={[
+                    styles.slotChar,
+                    isFocused ? styles.slotCharFocused : null,
+                  ]}
+                >
+                  {char ?? '_'}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+        {trailing}
         <BottomSheetTextInput
-          style={styles.phoneInput}
+          ref={inputRef as never}
+          style={styles.hiddenInput}
           value={digits}
           onChangeText={(text) =>
             onChangeText(text.replace(/\D/g, '').slice(0, MAX_DIGITS))
           }
-          placeholder="Phone number"
-          placeholderTextColor={colors.surfaceVariant}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
           maxLength={MAX_DIGITS}
+          caretHidden
         />
-        {trailing}
-      </View>
-      <View style={styles.slots}>
-        {Array.from({ length: MAX_DIGITS }, (_, i) => (
-          <View
-            key={i}
-            style={[styles.slot, i < digits.length && styles.slotFilled]}
-          />
-        ))}
-      </View>
+      </Pressable>
     </View>
   );
 }
