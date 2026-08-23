@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-import {
-  BottomSheetModal,
+import { useCallback, useMemo, useRef } from 'react';
+import { Modal, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
   type BottomSheetBackdropProps,
@@ -12,20 +12,16 @@ import { OfferStep } from './steps/OfferStep.js';
 import { PaymentStep } from './steps/PaymentStep.js';
 import { ResultStep } from './steps/ResultStep.js';
 
+/**
+ * RN Modal hosts the sheet so it reliably appears above Expo Router /
+ * react-native-screens native stacks (BottomSheetModal.present() often no-ops).
+ */
 export function TopUpBottomSheet() {
   const { theme, sheetOpen, step, closeTopUp } = useJaza();
   const { colors, spacing } = theme;
   const insets = useSafeAreaInsets();
-  const ref = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['90%'], []);
-
-  useEffect(() => {
-    if (sheetOpen) {
-      ref.current?.present();
-    } else {
-      ref.current?.dismiss();
-    }
-  }, [sheetOpen]);
+  const ref = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ['92%'], []);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -41,6 +37,9 @@ export function TopUpBottomSheet() {
   );
 
   const styles = StyleSheet.create({
+    root: {
+      flex: 1,
+    },
     handle: {
       width: 48,
       height: 4,
@@ -57,26 +56,38 @@ export function TopUpBottomSheet() {
   });
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      onDismiss={closeTopUp}
-      backdropComponent={renderBackdrop}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
-      backgroundStyle={{ backgroundColor: colors.surface }}
-      handleComponent={() => <View style={styles.handle} />}
+    <Modal
+      visible={sheetOpen}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={closeTopUp}
     >
-      <BottomSheetScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}
-      >
-        {step === 'offer' ? <OfferStep /> : null}
-        {step === 'payment' ? <PaymentStep /> : null}
-        {step === 'processing' ? <ResultStep /> : null}
-      </BottomSheetScrollView>
-    </BottomSheetModal>
+      {/* Android: GH root must wrap sheets inside RN Modal */}
+      <GestureHandlerRootView style={styles.root}>
+        <BottomSheet
+          ref={ref}
+          index={0}
+          snapPoints={snapPoints}
+          enablePanDownToClose
+          onClose={closeTopUp}
+          backdropComponent={renderBackdrop}
+          keyboardBehavior="interactive"
+          keyboardBlurBehavior="restore"
+          android_keyboardInputMode="adjustResize"
+          backgroundStyle={{ backgroundColor: colors.surface }}
+          handleComponent={() => <View style={styles.handle} />}
+        >
+          <BottomSheetScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.content}
+          >
+            {step === 'offer' ? <OfferStep /> : null}
+            {step === 'payment' ? <PaymentStep /> : null}
+            {step === 'processing' ? <ResultStep /> : null}
+          </BottomSheetScrollView>
+        </BottomSheet>
+      </GestureHandlerRootView>
+    </Modal>
   );
 }

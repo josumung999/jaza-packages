@@ -21,7 +21,7 @@ npm install @jazadev/react-native
 Install peer dependencies (Expo):
 
 ```bash
-npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context @gorhom/bottom-sheet @expo/vector-icons
+npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context react-native-screens @gorhom/bottom-sheet @expo/vector-icons
 ```
 
 ---
@@ -58,11 +58,12 @@ export default {
 
 ## 3. Provider setup (app root)
 
-Wrap your app with three providers, outermost first:
+Wrap your app with these providers, outermost first:
 
 1. `GestureHandlerRootView` — gestures for bottom sheets  
-2. `BottomSheetModalProvider` — modal sheet host  
-3. `JazaProvider` — Jaza state, theme, and checkout sheet  
+2. `JazaProvider` — Jaza state, theme, and checkout sheet  
+
+(`BottomSheetModalProvider` is not required; the SDK uses React Native `Modal` + `@gorhom/bottom-sheet`.)
 
 `getBalance` is defined here once; `JazaBalanceWidget` and the offer step both use it.
 
@@ -71,7 +72,6 @@ Wrap your app with three providers, outermost first:
 ```tsx
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { JazaProvider } from '@jazadev/react-native';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
@@ -79,24 +79,22 @@ const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <JazaProvider
-          publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-          getBalance={async () => {
-            const res = await fetch(`${API_BASE}/jaza/balance`, {
-              credentials: 'include',
-            });
-            const data = await res.json();
-            return data.balanceCredits as number;
-          }}
-          onTopUpComplete={({ credits }) => {
-            console.log('Top-up completed', credits);
-          }}
-          theme="system"
-        >
-          <Stack />
-        </JazaProvider>
-      </BottomSheetModalProvider>
+      <JazaProvider
+        publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+        getBalance={async () => {
+          const res = await fetch(`${API_BASE}/jaza/balance`, {
+            credentials: 'include',
+          });
+          const data = await res.json();
+          return data.balanceCredits as number;
+        }}
+        onTopUpComplete={({ credits }) => {
+          console.log('Top-up completed', credits);
+        }}
+        theme="system"
+      >
+        <Stack />
+      </JazaProvider>
     </GestureHandlerRootView>
   );
 }
@@ -108,25 +106,22 @@ Same wrappers; replace `<Stack />` with your navigation tree or screen component
 
 ```tsx
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { JazaProvider } from '@jazadev/react-native';
 import { HomeScreen } from './screens/HomeScreen';
 
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <JazaProvider
-          publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-          getBalance={async () => {
-            const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/jaza/balance`);
-            return (await res.json()).balanceCredits;
-          }}
-          theme="system"
-        >
-          <HomeScreen />
-        </JazaProvider>
-      </BottomSheetModalProvider>
+      <JazaProvider
+        publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+        getBalance={async () => {
+          const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/jaza/balance`);
+          return (await res.json()).balanceCredits;
+        }}
+        theme="system"
+      >
+        <HomeScreen />
+      </JazaProvider>
     </GestureHandlerRootView>
   );
 }

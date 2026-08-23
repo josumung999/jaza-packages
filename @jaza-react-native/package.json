@@ -34,10 +34,14 @@
     "react-native": ">=0.74",
     "react-native-gesture-handler": ">=2",
     "react-native-reanimated": ">=3",
-    "react-native-safe-area-context": ">=4"
+    "react-native-safe-area-context": ">=4",
+    "react-native-screens": ">=4"
   },
   "peerDependenciesMeta": {
     "@expo/vector-icons": {
+      "optional": true
+    },
+    "react-native-screens": {
       "optional": true
     }
   },

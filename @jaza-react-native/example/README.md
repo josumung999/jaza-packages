@@ -24,17 +24,27 @@ cp .env.example .env
 # fill JAZA_SECRET_KEY + EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY
 ```
 
-## Run (Expo Go)
+## Run
+
+This sample targets **Expo SDK 57**. Use a **development build** (EAS) if your Expo Go client does not support that SDK yet.
 
 ```bash
 # optional: rebuild SDK on change
 npm run dev -w @jazadev/react-native
 
-# from this directory
-npm start
+# from this directory — after an EAS development build is installed
+npx expo start --dev-client
 ```
 
-Scan the QR code with Expo Go. On a physical device, API routes are reached via the Metro host derived from `expo-constants` — phone and computer must be on the same network.
+On a physical device, API routes are reached via the Metro host from `expo-constants` — phone and computer must be on the same network.
+
+If Metro fails with `Unable to resolve "expo-modules-core"`, clear the cache and restart:
+
+```bash
+npx expo start --dev-client -c
+```
+
+The sample Metro config keeps hierarchical lookup enabled so nested Expo packages resolve under npm workspaces.
 
 ## Notes
 

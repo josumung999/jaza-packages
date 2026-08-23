@@ -31,6 +31,7 @@ export {
   enrichCountries,
   formatCredits,
   formatUsd,
+  formatCurrencyAmount,
   formatLocalAmount,
   pickDefaultCurrencyCode,
   isDepositTerminal,

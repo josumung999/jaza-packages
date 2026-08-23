@@ -105,6 +105,7 @@ export function JazaProvider({
 
   const [bundles, setBundles] = useState<Bundle[]>([]);
   const [bundlesLoading, setBundlesLoading] = useState(false);
+  const [bundlesError, setBundlesError] = useState<string | null>(null);
   const [selectedBundle, setSelectedBundle] = useState<Bundle | null>(null);
 
   const [countries, setCountries] = useState<EnrichedCountry[]>([]);
@@ -167,6 +168,7 @@ export function JazaProvider({
 
   const loadSessionData = useCallback(async () => {
     setBundlesLoading(true);
+    setBundlesError(null);
     try {
       const [bundleList, catalogCountries] = await Promise.all([
         client.listBundles(),
@@ -178,6 +180,8 @@ export function JazaProvider({
       setBundles(active);
       if (active.length > 0) {
         setSelectedBundle(active[0]!);
+      } else {
+        setSelectedBundle(null);
       }
       const enriched = enrichCountries(catalogCountries);
       setCountries(enriched);
@@ -194,6 +198,12 @@ export function JazaProvider({
           return pickDefaultCurrencyCode(codes);
         });
       }
+    } catch (err) {
+      setBundles([]);
+      setSelectedBundle(null);
+      setBundlesError(
+        err instanceof Error ? err.message : 'Failed to load bundles',
+      );
     } finally {
       setBundlesLoading(false);
     }
@@ -208,8 +218,11 @@ export function JazaProvider({
       setSelectedCountryState(null);
       setSelectedCurrencyCode(null);
       setPhoneNational('');
+      setBundlesError(null);
+      // Open sheet immediately — do not block present() on network calls.
       setSheetOpen(true);
-      await Promise.all([loadSessionData(), refreshBalance()]);
+      void loadSessionData();
+      void refreshBalance();
     },
     [client, loadSessionData, refreshBalance, resetPaymentState],
   );
@@ -436,6 +449,7 @@ export function JazaProvider({
       topUpToken,
       bundles,
       bundlesLoading,
+      bundlesError,
       selectedBundle,
       setSelectedBundle,
       countries,
@@ -477,6 +491,7 @@ export function JazaProvider({
       topUpToken,
       bundles,
       bundlesLoading,
+      bundlesError,
       selectedBundle,
       countries,
       selectedCountry,

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildE164,
+  formatCurrencyAmount,
   pickDefaultCurrencyCode,
   isDepositTerminal,
+  resolveCurrencyFractionDigits,
 } from './helpers.js';
 import { iso2ToFlag, getDialCode } from '../data/dialCodes.js';
 
@@ -18,6 +20,23 @@ describe('helpers', () => {
   it('isDepositTerminal detects final states', () => {
     expect(isDepositTerminal('COMPLETED')).toBe(true);
     expect(isDepositTerminal('PENDING')).toBe(false);
+  });
+});
+
+describe('formatCurrencyAmount', () => {
+  it('formats USD with 2 decimals', () => {
+    expect(formatCurrencyAmount(9, 'USD', 2)).toBe('$9.00');
+  });
+
+  it('formats 0-decimal CDF as integer', () => {
+    const formatted = formatCurrencyAmount('13158', 'CDF', 0);
+    expect(formatted).not.toContain('.');
+    expect(formatted).toContain('13,158');
+  });
+
+  it('resolveCurrencyFractionDigits uses catalog decimals', () => {
+    expect(resolveCurrencyFractionDigits('CDF', 0)).toBe(0);
+    expect(resolveCurrencyFractionDigits('USD')).toBe(2);
   });
 });
 

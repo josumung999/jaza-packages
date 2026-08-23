@@ -77,16 +77,51 @@ export function formatCredits(n: number): string {
 export function formatUsd(priceUsd: string): string {
   const n = Number(priceUsd);
   if (Number.isNaN(n)) return priceUsd;
-  return `$${n.toFixed(2)}`;
+  return formatCurrencyAmount(n, 'USD', 2);
 }
 
+/** Fraction digits for display — mirrors catalog decimals / USD rules. */
+export function resolveCurrencyFractionDigits(
+  currencyCode: string,
+  decimals?: number,
+): number {
+  if (decimals !== undefined) return decimals;
+  if (currencyCode.toUpperCase() === 'USD') return 2;
+  return 2;
+}
+
+export function formatCurrencyAmount(
+  amount: string | number,
+  currencyCode: string,
+  decimals?: number,
+): string {
+  const n = typeof amount === 'string' ? Number(amount) : amount;
+  const code = currencyCode.toUpperCase();
+  if (Number.isNaN(n)) return `${amount} ${code}`;
+
+  const fractionDigits = resolveCurrencyFractionDigits(code, decimals);
+
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: code,
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(n);
+  } catch {
+    const grouped = n.toLocaleString('en-US', {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+    return `${grouped} ${code}`;
+  }
+}
+
+/** @deprecated Use formatCurrencyAmount */
 export function formatLocalAmount(
   amount: string,
   currencyCode: string,
   decimals?: number,
 ): string {
-  const n = Number(amount);
-  if (Number.isNaN(n)) return `${amount} ${currencyCode}`;
-  const d = decimals ?? 2;
-  return `${n.toFixed(d)} ${currencyCode}`;
+  return formatCurrencyAmount(amount, currencyCode, decimals);
 }

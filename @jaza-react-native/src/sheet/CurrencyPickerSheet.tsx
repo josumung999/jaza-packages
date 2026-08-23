@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
-  BottomSheetModal,
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-} from '@gorhom/bottom-sheet';
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useJaza } from '../provider/JazaContext.js';
+import { createSelectableRowStyles } from '../theme/listStyles.js';
 
 export type CurrencyOption = {
   code: string;
@@ -29,76 +32,72 @@ export function CurrencyPickerSheet({
 }: CurrencyPickerSheetProps) {
   const { theme } = useJaza();
   const { colors, spacing, radius } = theme;
-  const ref = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['40%'], []);
-
-  useEffect(() => {
-    if (visible) ref.current?.present();
-    else ref.current?.dismiss();
-  }, [visible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-      />
-    ),
-    [],
-  );
+  const insets = useSafeAreaInsets();
+  const rowStyles = createSelectableRowStyles(theme);
 
   const styles = StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      maxHeight: '50%',
+      paddingHorizontal: spacing.gutter,
+      paddingTop: spacing.md,
+      paddingBottom: insets.bottom + spacing.md,
+    },
+    handle: {
+      width: 48,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.surfaceContainerHighest,
+      alignSelf: 'center',
+      marginBottom: spacing.md,
+    },
     title: {
       color: colors.onSurface,
       fontSize: 18,
       fontWeight: '600',
       marginBottom: spacing.md,
     },
-    row: {
-      paddingVertical: spacing.md,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.outlineVariant,
-    },
-    code: {
-      color: colors.onSurface,
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    selected: {
-      backgroundColor: `${colors.primary}15`,
-    },
   });
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      onDismiss={onClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: colors.surfaceContainerHighest }}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
     >
-      <View style={{ paddingHorizontal: spacing.gutter, flex: 1 }}>
-        <Text style={styles.title}>Select currency</Text>
-        <FlatList
-          data={currencies}
-          keyExtractor={(item) => item.code}
-          renderItem={({ item }) => {
-            const selected = selectedCode === item.code;
-            return (
-              <Pressable
-                style={[styles.row, selected && styles.selected]}
-                onPress={() => onSelect(item.code)}
-              >
-                <Text style={styles.code}>{item.code}</Text>
-              </Pressable>
-            );
-          }}
-        />
-      </View>
-    </BottomSheetModal>
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+          <View style={styles.handle} />
+          <Text style={styles.title}>Select currency</Text>
+          <FlatList
+            data={currencies}
+            keyExtractor={(item) => item.code}
+            renderItem={({ item }) => {
+              const selected = selectedCode === item.code;
+              return (
+                <Pressable
+                  style={[rowStyles.row, selected && rowStyles.rowSelected]}
+                  onPress={() => onSelect(item.code)}
+                >
+                  <Text
+                    style={[rowStyles.label, selected && rowStyles.labelSelected]}
+                  >
+                    {item.code}
+                  </Text>
+                </Pressable>
+              );
+            }}
+          />
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { JazaBalanceWidget, JazaTopUpButton } from '@jazadev/react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/auth-context';
@@ -48,13 +48,15 @@ export default function HomeScreen() {
             method: 'POST',
             userId: session.userId,
           });
-          if (!res.ok) {
-            const data = (await res.json().catch(() => ({}))) as {
-              message?: string;
-            };
-            throw new Error(data.message ?? 'Could not start top-up');
+          const data = (await res.json().catch(() => ({}))) as {
+            message?: string;
+            token?: string;
+          };
+          if (!res.ok || !data.token?.trim()) {
+            const message = data.message ?? `Could not start top-up (${res.status})`;
+            Alert.alert('Top up failed', message);
+            throw new Error(message);
           }
-          const data = (await res.json()) as { token: string };
           return data.token;
         }}
       />

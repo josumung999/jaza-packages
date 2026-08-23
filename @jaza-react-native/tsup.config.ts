@@ -13,6 +13,7 @@ export default defineConfig({
     'react-native-reanimated',
     'react-native-gesture-handler',
     'react-native-safe-area-context',
+    'react-native-screens',
     '@gorhom/bottom-sheet',
     '@expo/vector-icons',
   ],

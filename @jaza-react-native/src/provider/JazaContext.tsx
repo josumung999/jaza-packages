@@ -29,6 +29,7 @@ export type JazaContextValue = {
   topUpToken: string | null;
   bundles: Bundle[];
   bundlesLoading: boolean;
+  bundlesError: string | null;
   selectedBundle: Bundle | null;
   setSelectedBundle: (b: Bundle | null) => void;
   countries: EnrichedCountry[];

@@ -46,37 +46,6 @@ export type JazaTheme = {
 const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 40, gutter: 20 };
 const radius = { md: 8, lg: 12, xl: 16, full: 9999 };
 
-export const lightTheme: JazaTheme = {
-  mode: 'light',
-  spacing,
-  radius,
-  colors: {
-    background: '#f4fbf8',
-    surface: '#f9f9ff',
-    surfaceContainer: '#e8efec',
-    surfaceContainerLow: '#f1f5f9',
-    surfaceContainerHigh: '#e2eae7',
-    surfaceContainerHighest: '#dde4e1',
-    surfaceVariant: '#dde4e1',
-    onSurface: '#161d1b',
-    onSurfaceVariant: '#3c4a46',
-    primary: '#006b5f',
-    onPrimary: '#ffffff',
-    primaryContainer: '#2dd4bf',
-    onPrimaryContainer: '#00574d',
-    secondaryContainer: '#dae2fd',
-    onSecondaryContainer: '#5c647a',
-    outline: '#cbd5e1',
-    outlineVariant: '#bacac5',
-    error: '#ba1a1a',
-    success: '#059669',
-    overlay: 'rgba(255,255,255,0.5)',
-    bundleBorder: '#bacac5',
-    bundleBorderSelected: '#006b5f',
-    bundleBg: '#ffffff',
-  },
-};
-
 export const darkTheme: JazaTheme = {
   mode: 'dark',
   spacing,
@@ -106,6 +75,12 @@ export const darkTheme: JazaTheme = {
     bundleBorderSelected: '#2dd4bf',
     bundleBg: '#111111',
   },
+};
+
+/** Checkout UI uses dark palette in both light and dark preference. */
+export const lightTheme: JazaTheme = {
+  ...darkTheme,
+  mode: 'light',
 };
 
 export type ThemePreference = 'light' | 'dark' | 'system';

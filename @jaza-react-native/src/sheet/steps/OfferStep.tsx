@@ -17,6 +17,7 @@ export function OfferStep() {
     balanceLoading,
     bundles,
     bundlesLoading,
+    bundlesError,
     selectedBundle,
     setSelectedBundle,
     goToPayment,
@@ -105,6 +106,12 @@ export function OfferStep() {
       fontWeight: '600',
     },
     loading: { padding: spacing.xl, alignItems: 'center' },
+    error: {
+      color: colors.error,
+      fontSize: 14,
+      marginBottom: spacing.md,
+      lineHeight: 20,
+    },
   });
 
   const renderBundle = (bundle: Bundle) => {
@@ -153,6 +160,8 @@ export function OfferStep() {
 
       <Text style={styles.title}>Top-up Credits</Text>
 
+      {bundlesError ? <Text style={styles.error}>{bundlesError}</Text> : null}
+
       {bundlesLoading ? (
         <View style={styles.loading}>
           <ActivityIndicator color={colors.primary} />
@@ -160,6 +169,10 @@ export function OfferStep() {
       ) : (
         bundles.map(renderBundle)
       )}
+
+      {!bundlesLoading && !bundlesError && bundles.length === 0 ? (
+        <Text style={styles.error}>No active bundles for this app.</Text>
+      ) : null}
 
       <Pressable
         style={styles.cta}

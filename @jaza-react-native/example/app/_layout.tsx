@@ -1,8 +1,7 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
-import { useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { JazaProvider } from '@jazadev/react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
@@ -27,6 +26,18 @@ function AuthGate({ children }: { children: ReactNode }) {
     }
   }, [session, loading, pathname, router]);
 
+  const getBalance = useCallback(async () => {
+    if (!session) throw new Error('Not signed in');
+    const res = await apiFetch('/api/jaza/balance', {
+      userId: session.userId,
+    });
+    if (!res.ok) {
+      throw new Error('Failed to load balance');
+    }
+    const data = (await res.json()) as { balanceCredits: number };
+    return data.balanceCredits;
+  }, [session]);
+
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -43,20 +54,8 @@ function AuthGate({ children }: { children: ReactNode }) {
     <JazaProvider
       publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
       apiBaseUrl={process.env.EXPO_PUBLIC_JAZA_API_BASE_URL}
-      getBalance={async () => {
-        const res = await apiFetch('/api/jaza/balance', {
-          userId: session.userId,
-        });
-        if (!res.ok) {
-          throw new Error('Failed to load balance');
-        }
-        const data = (await res.json()) as { balanceCredits: number };
-        return data.balanceCredits;
-      }}
-      onTopUpComplete={() => {
-        // Balance widget refreshes via provider
-      }}
-      theme="system"
+      getBalance={getBalance}
+      theme="dark"
     >
       {children}
     </JazaProvider>
@@ -66,17 +65,15 @@ function AuthGate({ children }: { children: ReactNode }) {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <AuthProvider>
-          <AuthGate>
-            <StatusBar style="auto" />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="home" />
-            </Stack>
-          </AuthGate>
-        </AuthProvider>
-      </BottomSheetModalProvider>
+      <AuthProvider>
+        <AuthGate>
+          <StatusBar style="auto" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="home" />
+          </Stack>
+        </AuthGate>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

@@ -6,10 +6,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Icon } from '../../components/Icon.js';
+import { PhoneDigitInput } from '../../components/PhoneDigitInput.js';
 import { useJaza } from '../../provider/JazaContext.js';
-import { formatLocalAmount, formatUsd } from '../../utils/helpers.js';
+import { formatCurrencyAmount, formatUsd } from '../../utils/helpers.js';
 import { CountryPickerSheet } from '../CountryPickerSheet.js';
 import { CurrencyPickerSheet } from '../CurrencyPickerSheet.js';
 
@@ -50,8 +50,16 @@ export function PaymentStep() {
 
   const showCurrencyPicker = currencyOptions.length > 1;
 
+  const formattedQuote = quote
+    ? formatCurrencyAmount(
+        quote.totalLocal,
+        quote.currencyCode,
+        selectedCurrency?.decimals,
+      )
+    : null;
+
   const buyLabel = quote
-    ? `Buy ${formatLocalAmount(quote.totalLocal, quote.currencyCode, selectedCurrency?.decimals)}`
+    ? `Buy ${formattedQuote}`
     : quoteLoading
       ? 'Loading…'
       : selectedBundle
@@ -64,13 +72,13 @@ export function PaymentStep() {
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: spacing.lg,
-      padding: spacing.md,
-      backgroundColor: colors.surfaceContainerLow,
-      borderRadius: radius.xl,
-      borderWidth: 1,
-      borderColor: colors.outlineVariant,
     },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      flex: 1,
+    },
     backBtn: {
       width: 40,
       height: 40,
@@ -81,14 +89,15 @@ export function PaymentStep() {
     },
     headerTitle: {
       color: colors.onSurface,
-      fontSize: 20,
+      fontSize: 24,
       fontWeight: '600',
+      flexShrink: 1,
     },
     balanceChip: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
-      backgroundColor: `${colors.primary}18`,
+      backgroundColor: colors.surfaceContainer,
       paddingHorizontal: spacing.sm,
       paddingVertical: spacing.xs,
       borderRadius: radius.full,
@@ -97,20 +106,6 @@ export function PaymentStep() {
       color: colors.primary,
       fontSize: 12,
       fontWeight: '500',
-    },
-    label: {
-      color: colors.onSurfaceVariant,
-      fontSize: 12,
-      letterSpacing: 0.5,
-      marginBottom: spacing.sm,
-      textTransform: 'uppercase',
-    },
-    phoneRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderBottomWidth: 2,
-      borderBottomColor: colors.outlineVariant,
-      paddingBottom: spacing.xs,
     },
     dialBtn: {
       flexDirection: 'row',
@@ -122,14 +117,6 @@ export function PaymentStep() {
       color: colors.primaryContainer,
       fontSize: 28,
       fontWeight: '700',
-    },
-    phoneInput: {
-      flex: 1,
-      fontSize: 28,
-      fontWeight: '600',
-      color: colors.primaryContainer,
-      letterSpacing: 2,
-      paddingVertical: spacing.md,
     },
     providerText: {
       color: colors.primaryContainer,
@@ -143,7 +130,7 @@ export function PaymentStep() {
       marginTop: spacing.sm,
     },
     payCard: {
-      backgroundColor: colors.surfaceContainer,
+      backgroundColor: colors.surfaceContainerLow,
       borderRadius: radius.xl,
       borderWidth: 1,
       borderColor: colors.outlineVariant,
@@ -160,16 +147,20 @@ export function PaymentStep() {
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.xs,
-      backgroundColor: colors.surfaceContainerLow,
       paddingHorizontal: spacing.sm,
       paddingVertical: spacing.xs,
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.outlineVariant,
     },
+    currencyCode: {
+      color: colors.onSurface,
+      fontSize: 18,
+      fontWeight: '600',
+    },
     amountText: {
       color: colors.onSurface,
-      fontSize: 24,
+      fontSize: 18,
       fontWeight: '600',
     },
     cta: {
@@ -208,7 +199,7 @@ export function PaymentStep() {
           <Pressable style={styles.backBtn} onPress={goToOffer}>
             <Icon name="arrow-back" size={22} color={colors.onSurfaceVariant} />
           </Pressable>
-          <Text style={styles.headerTitle}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
             {selectedBundle?.label ?? 'Top-up Balance'}
           </Text>
         </View>
@@ -220,33 +211,29 @@ export function PaymentStep() {
         ) : null}
       </View>
 
-      <Text style={styles.label}>Phone Number</Text>
-      <View style={styles.phoneRow}>
-        <Pressable
-          style={styles.dialBtn}
-          onPress={() => setCountryPickerOpen(true)}
-        >
-          <Text style={styles.dialText}>
-            +{selectedCountry?.dialCode ?? '…'}
-          </Text>
-          <Icon name="expand-more" size={24} color={colors.onSurfaceVariant} />
-        </Pressable>
-        <BottomSheetTextInput
-          style={styles.phoneInput}
-          value={phoneNational}
-          onChangeText={setPhoneNational}
-          placeholder="Phone number"
-          placeholderTextColor={colors.surfaceVariant}
-          keyboardType="phone-pad"
-          autoComplete="tel"
-          textContentType="telephoneNumber"
-        />
-        {predict && !predictLoading ? (
-          <Icon name="check-circle" size={24} color={colors.primary} />
-        ) : predictLoading ? (
-          <ActivityIndicator color={colors.primary} size="small" />
-        ) : null}
-      </View>
+      <PhoneDigitInput
+        theme={theme}
+        value={phoneNational}
+        onChangeText={setPhoneNational}
+        dialPressable={
+          <Pressable
+            style={styles.dialBtn}
+            onPress={() => setCountryPickerOpen(true)}
+          >
+            <Text style={styles.dialText}>
+              +{selectedCountry?.dialCode ?? '…'}
+            </Text>
+            <Icon name="expand-more" size={24} color={colors.onSurfaceVariant} />
+          </Pressable>
+        }
+        trailing={
+          predict && !predictLoading ? (
+            <Icon name="check-circle" size={24} color={colors.primary} />
+          ) : predictLoading ? (
+            <ActivityIndicator color={colors.primary} size="small" />
+          ) : null
+        }
+      />
 
       {predict ? (
         <Text style={styles.providerText}>{predict.provider.displayName}</Text>
@@ -261,26 +248,19 @@ export function PaymentStep() {
               style={styles.currencyBtn}
               onPress={() => setCurrencyPickerOpen(true)}
             >
-              <Text style={styles.amountText}>
+              <Text style={styles.currencyCode}>
                 {selectedCurrencyCode ?? '—'}
               </Text>
               <Icon name="expand-more" size={20} color={colors.onSurfaceVariant} />
             </Pressable>
           ) : (
-            <Text style={styles.amountText}>
+            <Text style={styles.currencyCode}>
               {selectedCurrencyCode ?? quote?.currencyCode ?? 'USD'}
             </Text>
           )}
           <Text style={styles.amountText}>
-            {quote
-              ? formatLocalAmount(
-                  quote.totalLocal,
-                  quote.currencyCode,
-                  selectedCurrency?.decimals,
-                )
-              : selectedBundle
-                ? formatUsd(selectedBundle.priceUsd)
-                : '—'}
+            {formattedQuote ??
+              (selectedBundle ? formatUsd(selectedBundle.priceUsd) : '—')}
           </Text>
         </View>
         {quoteError ? <Text style={styles.quoteError}>{quoteError}</Text> : null}
