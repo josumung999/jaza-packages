@@ -1,36 +1,35 @@
 import { StyleSheet } from 'react-native';
 import type { JazaTheme } from './tokens.js';
 
+/** Flat list rows: hairline bottom border; selected = teal label only. */
 export function createSelectableRowStyles(theme: JazaTheme) {
-  const { colors, spacing, radius } = theme;
+  const { colors, spacing } = theme;
   return StyleSheet.create({
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: spacing.md,
-      borderRadius: radius.xl,
-      backgroundColor: colors.bundleBg,
-      borderWidth: 1,
-      borderColor: colors.bundleBorder,
-      marginBottom: spacing.sm,
+      paddingVertical: spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.outlineVariant,
+      gap: spacing.md,
     },
     rowSelected: {
-      borderColor: colors.bundleBorderSelected,
-      borderWidth: 2,
+      borderBottomColor: colors.primaryContainer,
     },
     label: {
       color: colors.onSurface,
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
+      flexShrink: 1,
     },
     labelSelected: {
       color: colors.primaryContainer,
+      fontWeight: '600',
     },
     sublabel: {
       color: colors.onSurfaceVariant,
       fontSize: 14,
-      marginTop: 2,
     },
   });
 }

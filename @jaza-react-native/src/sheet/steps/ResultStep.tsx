@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { Icon } from '../../components/Icon.js';
+import { ProcessingSpinner } from '../../components/ProcessingSpinner.js';
 import { useJaza } from '../../provider/JazaContext.js';
 import { formatCredits } from '../../utils/helpers.js';
 
@@ -41,17 +42,16 @@ export function ResultStep() {
       paddingVertical: spacing.xl,
     },
     spinnerWrap: {
-      width: 64,
-      height: 64,
       marginBottom: spacing.lg,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     title: {
       color: colors.onSurface,
       fontSize: 20,
       fontWeight: '600',
       textAlign: 'center',
+    },
+    titlePulse: {
+      opacity: 0.9,
     },
     subtitle: {
       color: colors.onSurfaceVariant,
@@ -108,12 +108,12 @@ export function ResultStep() {
     return (
       <View style={styles.container}>
         <View style={styles.spinnerWrap}>
-          <Icon name="lock" size={28} color={colors.primary} />
+          <ProcessingSpinner theme={theme} size={64} />
         </View>
-        <Text style={styles.title}>Processing payment...</Text>
-        <Text style={styles.subtitle}>
-          Please authorize on your device
+        <Text style={[styles.title, styles.titlePulse]}>
+          Processing payment...
         </Text>
+        <Text style={styles.subtitle}>Please authorize on your device</Text>
       </View>
     );
   }

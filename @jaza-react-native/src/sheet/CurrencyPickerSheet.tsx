@@ -80,6 +80,7 @@ export function CurrencyPickerSheet({
           <FlatList
             data={currencies}
             keyExtractor={(item) => item.code}
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => {
               const selected = selectedCode === item.code;
               return (

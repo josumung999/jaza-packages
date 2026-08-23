@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -27,6 +29,10 @@ export function CountryPickerSheet({
   const [query, setQuery] = useState('');
   const rowStyles = createSelectableRowStyles(theme);
 
+  useEffect(() => {
+    if (!visible) setQuery('');
+  }, [visible]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return countries;
@@ -39,19 +45,20 @@ export function CountryPickerSheet({
   }, [countries, query]);
 
   const styles = StyleSheet.create({
-    backdrop: {
+    root: {
       flex: 1,
-      backgroundColor: colors.overlay,
       justifyContent: 'flex-end',
+      backgroundColor: colors.overlay,
     },
     sheet: {
       backgroundColor: colors.surface,
       borderTopLeftRadius: radius.xl,
       borderTopRightRadius: radius.xl,
-      maxHeight: '75%',
       paddingHorizontal: spacing.gutter,
       paddingTop: spacing.md,
-      paddingBottom: insets.bottom + spacing.md,
+      paddingBottom: Math.max(insets.bottom, spacing.md),
+      maxHeight: '85%',
+      minHeight: 320,
     },
     handle: {
       width: 48,
@@ -65,15 +72,38 @@ export function CountryPickerSheet({
       backgroundColor: colors.surfaceContainerHigh,
       borderRadius: radius.lg,
       paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
+      minHeight: 48,
+      fontSize: 16,
+      lineHeight: 22,
       color: colors.onSurface,
       marginBottom: spacing.md,
     },
-    flag: { fontSize: 24 },
+    list: {
+      flexGrow: 1,
+      flexShrink: 1,
+    },
+    nameRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      minWidth: 0,
+    },
+    flag: {
+      fontSize: 24,
+      flexShrink: 0,
+    },
     dial: {
       color: colors.onSurfaceVariant,
       fontSize: 14,
       fontFamily: 'monospace',
+      flexShrink: 0,
+      marginLeft: spacing.sm,
+    },
+    empty: {
+      color: colors.onSurfaceVariant,
+      textAlign: 'center',
+      paddingVertical: spacing.lg,
     },
   });
 
@@ -84,8 +114,12 @@ export function CountryPickerSheet({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={styles.sheet}>
           <View style={styles.handle} />
           <TextInput
             style={styles.search}
@@ -94,11 +128,16 @@ export function CountryPickerSheet({
             value={query}
             onChangeText={setQuery}
             autoCorrect={false}
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
+            returnKeyType="search"
           />
           <FlatList
+            style={styles.list}
             data={filtered}
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             renderItem={({ item }) => {
               const selected = selectedCountry?.id === item.id;
               return (
@@ -109,10 +148,15 @@ export function CountryPickerSheet({
                     onClose();
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 }}>
+                  <View style={styles.nameRow}>
                     <Text style={styles.flag}>{item.flag}</Text>
                     <Text
-                      style={[rowStyles.label, selected && rowStyles.labelSelected]}
+                      style={[
+                        rowStyles.label,
+                        selected && rowStyles.labelSelected,
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                     >
                       {item.name}
                     </Text>
@@ -121,9 +165,12 @@ export function CountryPickerSheet({
                 </Pressable>
               );
             }}
+            ListEmptyComponent={
+              <Text style={styles.empty}>No countries match</Text>
+            }
           />
-        </Pressable>
-      </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
