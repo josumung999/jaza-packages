@@ -7,6 +7,7 @@ import type {
   Customer,
   JazaConfig,
   TopUpSession,
+  Wallet,
 } from './types.js';
 import { DEFAULT_API_BASE_URL } from './version.js';
 
@@ -91,6 +92,7 @@ function assertConsume(params: ConsumeParams): void {
  * const session = await jaza.topUp({ customerId: customer.id });
  * // hand session.token + publicKey to your frontend SDK
  * await jaza.consume({ customerId: customer.id, featureCode: 'SEND_MESSAGE', idempotencyKey: '...' });
+ * const wallet = await jaza.getBalance({ customerId: customer.id });
  * await jaza.check({ topUpId: session.id });
  * ```
  */
@@ -130,6 +132,23 @@ export class Jaza {
     });
   }
 
+  /**
+   * Get a customer's wallet (including `balanceCredits`).
+   * For customers from `createCustomer`, the wallet is keyed by `customerId`.
+   */
+  getBalance(params: { customerId: string }): Promise<Wallet> {
+    if (!params?.customerId?.trim()) {
+      throw new JazaError('customerId is required', {
+        statusCode: 0,
+        code: 'invalid_request',
+      });
+    }
+    return this.http.request<Wallet>(
+      'GET',
+      `/v1/wallets/by-user/${encodeURIComponent(params.customerId)}`,
+    );
+  }
+
   /** Debit credits for a customer (feature code or raw credits). */
   consume(params: ConsumeParams): Promise<ConsumeResult> {
     assertConsume(params);
@@ -142,7 +161,7 @@ export class Jaza {
     });
   }
 
-  /** Check whether a top-up session completed (PENDING until PawaPay deposits land). */
+  /** Check whether a top-up session completed (PENDING until deposits land). */
   check(params: { topUpId: string }): Promise<TopUpSession> {
     if (!params?.topUpId?.trim()) {
       throw new JazaError('topUpId is required', {

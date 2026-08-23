@@ -12,8 +12,13 @@ afterEach(() => {
 function mockFetch(handler: (input: string, init?: RequestInit) => Response) {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input.toString();
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
       return handler(url, init);
     }),
   );
@@ -82,6 +87,35 @@ describe('Jaza', () => {
     const session = await jaza.topUp({ customerId: 'cus_1' });
     expect(session.token).toBe('jwt.token.here');
     expect(jaza.publicKey).toBe(publicKey);
+  });
+
+  it('getBalance returns wallet', async () => {
+    mockFetch((url, init) => {
+      expect(url).toBe('https://api.jaza.dev/v1/wallets/by-user/cus_1');
+      expect(init?.method).toBe('GET');
+      return new Response(
+        JSON.stringify({
+          id: 'w1',
+          appId: 'a1',
+          externalUserId: 'cus_1',
+          customerId: 'cus_1',
+          balanceCredits: 1250,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        }),
+        { status: 200 },
+      );
+    });
+
+    const jaza = new Jaza({ secretKey, publicKey });
+    const wallet = await jaza.getBalance({ customerId: 'cus_1' });
+    expect(wallet.balanceCredits).toBe(1250);
+    expect(wallet.customerId).toBe('cus_1');
+  });
+
+  it('getBalance requires customerId', () => {
+    const jaza = new Jaza({ secretKey, publicKey });
+    expect(() => jaza.getBalance({ customerId: '' })).toThrow(JazaError);
   });
 
   it('consume and check', async () => {

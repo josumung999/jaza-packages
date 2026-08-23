@@ -31,14 +31,18 @@ const session = await jaza.topUp({ customerId: customer.id });
 // Frontend: X-Jaza-Public-Key + Authorization: Bearer <token>
 // → bundles, predict, quote, deposits via @jazadev/react-native
 
-// 3. Meter usage
+// 3. Read balance (for your app’s getBalance BFF → @jazadev/react-native)
+const wallet = await jaza.getBalance({ customerId: customer.id });
+console.log(wallet.balanceCredits);
+
+// 4. Meter usage
 await jaza.consume({
   customerId: customer.id,
   featureCode: 'SEND_MESSAGE',
   idempotencyKey: `msg_${Date.now()}`,
 });
 
-// 4. Poll top-up session status
+// 5. Poll top-up session status
 const status = await jaza.check({ topUpId: session.id });
 console.log(status.status); // PENDING until deposits complete
 ```
@@ -49,6 +53,7 @@ console.log(status.status); // PENDING until deposits complete
 |--------|-------------|
 | `createCustomer({ name, email?, phoneNumber? })` | Returns `cus_…` |
 | `topUp({ customerId })` | Returns session + JWT `token` |
+| `getBalance({ customerId })` | Wallet with `balanceCredits` |
 | `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet |
 | `check({ topUpId })` | Session status |
 

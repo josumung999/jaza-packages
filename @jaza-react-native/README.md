@@ -20,10 +20,18 @@ npx expo install react react-native react-native-reanimated react-native-gesture
 
 | Layer | Package | Role |
 |-------|---------|------|
-| **Your server** | [`@jazadev/node`](https://www.npmjs.com/package/@jazadev/node) (optional) | Secret-key API: create customers, issue top-up JWTs, read wallet balance |
+| **Your server** | [`@jazadev/node`](https://www.npmjs.com/package/@jazadev/node) (optional) | Secret-key API: create customers, `topUp()`, `getBalance()`, consume |
 | **Your app** | `@jazadev/react-native` | Public-key UI: bundles, checkout sheet, payment status |
 
-The React Native SDK does **not** depend on `@jazadev/node`. Your app talks to **your** API; your server talks to Jaza with the secret key. Many teams use `@jazadev/node` on the server for convenience, but any HTTP client works.
+The React Native SDK does **not** depend on `@jazadev/node`. Your app talks to **your** API; your server talks to Jaza with the secret key.
+
+Example BFF for the provider’s `getBalance` callback:
+
+```ts
+// server
+const wallet = await jaza.getBalance({ customerId });
+return wallet.balanceCredits;
+```
 
 ## App setup
 
