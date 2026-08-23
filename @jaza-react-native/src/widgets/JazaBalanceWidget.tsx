@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import {
-  ActivityIndicator,
   StyleSheet,
   Text,
   View,
   type ViewStyle,
 } from 'react-native';
+import { BalanceValueSkeleton } from '../components/BalanceValueSkeleton.js';
 import { Icon } from '../components/Icon.js';
 import { useJaza } from '../provider/JazaContext.js';
 import { formatCredits } from '../utils/helpers.js';
@@ -57,13 +57,15 @@ export function JazaBalanceWidget({ style }: JazaBalanceWidgetProps) {
     <View style={styles.card}>
       <Text style={styles.label}>Current Balance</Text>
       <View style={styles.row}>
-        <Icon name="bolt" size={28} color={colors.primary} />
         {balanceLoading && balance === null ? (
-          <ActivityIndicator color={colors.primary} />
+          <BalanceValueSkeleton theme={theme} />
         ) : (
-          <Text style={styles.value}>
-            {balance !== null ? formatCredits(balance) : '—'}
-          </Text>
+          <>
+            <Icon name="bolt" size={28} color={colors.primary} />
+            <Text style={styles.value}>
+              {balance !== null ? formatCredits(balance) : '—'}
+            </Text>
+          </>
         )}
       </View>
       {balanceError ? (

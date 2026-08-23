@@ -26,6 +26,8 @@ export type JazaTheme = {
     bundleBorder: string;
     bundleBorderSelected: string;
     bundleBg: string;
+    skeleton: string;
+    skeletonHighlight: string;
   };
   spacing: {
     xs: number;
@@ -74,6 +76,8 @@ export const darkTheme: JazaTheme = {
     bundleBorder: '#262626',
     bundleBorderSelected: '#2dd4bf',
     bundleBg: '#111111',
+    skeleton: '#2a2c2c',
+    skeletonHighlight: '#3a3d3d',
   },
 };
 

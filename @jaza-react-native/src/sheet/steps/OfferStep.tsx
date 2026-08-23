@@ -1,10 +1,11 @@
 import {
-  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { BalanceValueSkeleton } from '../../components/BalanceValueSkeleton.js';
+import { BundleListSkeleton } from '../../components/BundleListSkeleton.js';
 import { Icon } from '../../components/Icon.js';
 import { useJaza } from '../../provider/JazaContext.js';
 import type { Bundle } from '../../api/types.js';
@@ -105,7 +106,6 @@ export function OfferStep() {
       fontSize: 16,
       fontWeight: '600',
     },
-    loading: { padding: spacing.xl, alignItems: 'center' },
     error: {
       color: colors.error,
       fontSize: 14,
@@ -147,13 +147,15 @@ export function OfferStep() {
       <View style={styles.balanceCard}>
         <Text style={styles.balanceLabel}>Current Balance</Text>
         <View style={styles.balanceRow}>
-          <Icon name="bolt" size={28} color={colors.primary} />
           {balanceLoading && balance === null ? (
-            <ActivityIndicator color={colors.primary} />
+            <BalanceValueSkeleton theme={theme} />
           ) : (
-            <Text style={styles.balanceValue}>
-              {balance !== null ? formatCredits(balance) : '—'}
-            </Text>
+            <>
+              <Icon name="bolt" size={28} color={colors.primary} />
+              <Text style={styles.balanceValue}>
+                {balance !== null ? formatCredits(balance) : '—'}
+              </Text>
+            </>
           )}
         </View>
       </View>
@@ -163,9 +165,7 @@ export function OfferStep() {
       {bundlesError ? <Text style={styles.error}>{bundlesError}</Text> : null}
 
       {bundlesLoading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
+        <BundleListSkeleton theme={theme} />
       ) : (
         bundles.map(renderBundle)
       )}

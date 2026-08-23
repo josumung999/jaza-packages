@@ -1,6 +1,6 @@
 {
   "name": "@jazadev/node",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official Node.js SDK for Jaza prepaid / metered billing",
   "license": "MIT",
   "author": "Jaza",
