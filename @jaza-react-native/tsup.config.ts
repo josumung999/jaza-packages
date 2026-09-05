@@ -16,6 +16,7 @@ export default defineConfig({
     'react-native-screens',
     '@gorhom/bottom-sheet',
     '@expo/vector-icons',
+    '@shopify/flash-list',
   ],
   outExtension({ format }) {
     return { js: format === 'cjs' ? '.cjs' : '.js' };

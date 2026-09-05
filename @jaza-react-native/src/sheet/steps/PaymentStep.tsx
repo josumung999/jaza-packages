@@ -105,8 +105,8 @@ export function PaymentStep() {
       gap: spacing.xs,
     },
     dialText: {
-      color: colors.primaryContainer,
-      fontSize: 22,
+      color: colors.onSurface,
+      fontSize: 18,
       fontWeight: '700',
     },
     providerText: {
@@ -209,7 +209,7 @@ export function PaymentStep() {
             <Text style={styles.dialText}>
               +{selectedCountry?.dialCode ?? '…'}
             </Text>
-            <Icon name="expand-more" size={24} color={colors.primaryContainer} />
+            <Icon name="expand-more" size={24} color={colors.onSurfaceVariant} />
           </Pressable>
         }
         trailing={

@@ -2,6 +2,9 @@ import { createContext, useContext } from 'react';
 import type { PublicClient } from '../api/publicClient.js';
 import type {
   Bundle,
+  InitFeature,
+  InitResult,
+  JazaAuthStatus,
   PredictProviderResponse,
   PublicDeposit,
   QuotePaymentResponse,
@@ -19,10 +22,18 @@ export type JazaContextValue = {
   themePreference: ThemePreference;
   publishableKey: string;
   client: PublicClient;
+  /** Session handshake status (init / authEndpoint) */
+  status: JazaAuthStatus;
+  /**
+   * Credit balance. Prefer `balanceCredits`; `balance` is kept for existing widgets.
+   */
+  balanceCredits: number | null;
   balance: number | null;
   balanceLoading: boolean;
   balanceError: string | null;
   refreshBalance: () => Promise<void>;
+  /** Features from last init snapshot (empty until session auth) */
+  features: InitFeature[];
   sheetOpen: boolean;
   step: TopUpStep;
   resultPhase: ResultPhase;
@@ -48,7 +59,7 @@ export type JazaContextValue = {
   deposit: PublicDeposit | null;
   depositError: string | null;
   failureReason: string | null;
-  openTopUp: (token: string) => Promise<void>;
+  openTopUp: () => Promise<void>;
   closeTopUp: () => void;
   goToOffer: () => void;
   goToPayment: () => void;
@@ -56,6 +67,8 @@ export type JazaContextValue = {
   retryPayment: () => void;
   onTopUpComplete?: (result: TopUpCompleteResult) => void;
 };
+
+export type { InitResult, JazaAuthStatus };
 
 export const JazaContext = createContext<JazaContextValue | null>(null);
 

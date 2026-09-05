@@ -30,6 +30,7 @@
   "peerDependencies": {
     "@gorhom/bottom-sheet": ">=5",
     "@expo/vector-icons": ">=14",
+    "@shopify/flash-list": ">=2",
     "react": ">=18",
     "react-native": ">=0.74",
     "react-native-gesture-handler": ">=2",
@@ -47,6 +48,7 @@
   },
   "devDependencies": {
     "@expo/vector-icons": "^14.0.4",
+    "@shopify/flash-list": "^2.0.2",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",
     "tsup": "^8.5.0",

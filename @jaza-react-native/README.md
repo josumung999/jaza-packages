@@ -2,13 +2,13 @@
 
 Official React Native / Expo SDK for Jaza.
 
-Use this in your **mobile app** with your publishable key (`jz_*_pk_*`) and a short-lived top-up token from **your backend**. Never put your secret key in the app.
+Use this in your **mobile app** with your publishable key (`jz_*_pk_*`) and a client session from **your backend** (`jaza.init` → `getSession` / `authEndpoint`). Never put your secret key in the app.
 
-Server-side calls (create customer, issue top-up JWT, read balance) use [`@jazadev/node`](https://www.npmjs.com/package/@jazadev/node) or any HTTP client with your secret key.
+Server-side: [`@jazadev/node`](https://www.npmjs.com/package/@jazadev/node) — `init` for the handshake, `consume` for debits. The SDK mints short-lived top-up JWTs internally via `POST /v1/client/top-ups` (session-authenticated); apps never handle that token.
 
 ### Try the sample
 
-A private Expo app lives in [`example/`](./example). It demos sign-in (local JSON + Jaza customer), balance, and top-up with Expo Router API routes. See [example/README.md](./example/README.md). It is **not** published with this package.
+A private Expo app lives in [`example/`](./example). It demos sign-in (local JSON + Jaza customer), balance, ledger, and top-up with Expo Router API routes. See [example/README.md](./example/README.md). It is **not** published with this package.
 
 ---
 
@@ -21,7 +21,7 @@ npm install @jazadev/react-native
 Install peer dependencies (Expo):
 
 ```bash
-npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context react-native-screens @gorhom/bottom-sheet @expo/vector-icons
+npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context react-native-screens @gorhom/bottom-sheet @expo/vector-icons @shopify/flash-list
 ```
 
 ---
@@ -65,14 +65,15 @@ Wrap your app with these providers, outermost first:
 
 (`BottomSheetModalProvider` is not required; the SDK uses React Native `Modal` + `@gorhom/bottom-sheet`.)
 
-`getBalance` is defined here once; `JazaBalanceWidget` and the offer step both use it.
+**Preferred:** pass `getSession` (or `authEndpoint`) so the SDK loads a client session via your host `jaza.init` route. The SDK then calls client routes (`/v1/client/wallet`, `/v1/client/ledger`, `/v1/client/top-ups`) with the session token + publishable key.  
+**Legacy:** `getBalance` alone still works until you migrate.
 
 ### Expo Router (`app/_layout.tsx`)
 
 ```tsx
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { JazaProvider } from '@jazadev/react-native';
+import { JazaProvider, type InitResult } from '@jazadev/react-native';
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
 
@@ -81,12 +82,16 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <JazaProvider
         publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-        getBalance={async () => {
-          const res = await fetch(`${API_BASE}/jaza/balance`, {
+        getSession={async () => {
+          const res = await fetch(`${API_BASE}/jaza/init`, {
+            method: 'POST',
             credentials: 'include',
           });
-          const data = await res.json();
-          return data.balanceCredits as number;
+          if (!res.ok) throw new Error('Jaza init failed');
+          return (await res.json()) as InitResult;
+        }}
+        onAuthError={() => {
+          console.warn('Jaza session expired');
         }}
         onTopUpComplete={({ credits }) => {
           console.log('Top-up completed', credits);
@@ -100,13 +105,21 @@ export default function RootLayout() {
 }
 ```
 
+Host route (Node):
+
+```ts
+// POST /jaza/init
+const result = await jaza.init({ customerId: req.user.jazaCustomerId });
+res.json(result);
+```
+
 ### Alternative: classic `App.tsx`
 
 Same wrappers; replace `<Stack />` with your navigation tree or screen components.
 
 ```tsx
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { JazaProvider } from '@jazadev/react-native';
+import { JazaProvider, type InitResult } from '@jazadev/react-native';
 import { HomeScreen } from './screens/HomeScreen';
 
 export default function App() {
@@ -114,9 +127,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <JazaProvider
         publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-        getBalance={async () => {
-          const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/jaza/balance`);
-          return (await res.json()).balanceCredits;
+        getSession={async () => {
+          const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/jaza/init`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (!res.ok) throw new Error('Jaza init failed');
+          return (await res.json()) as InitResult;
         }}
         theme="system"
       >
@@ -127,100 +144,104 @@ export default function App() {
 }
 ```
 
+`useJaza()` exposes `status` (`INITIALIZING` | `AUTHENTICATED` | …) and `balanceCredits` after a successful handshake.
+
 ---
 
-## 4. Show balance — `JazaBalanceWidget`
+## 4. Show balance — `JazaBalance`
 
-Render on any screen inside `JazaProvider`. It calls `getBalance` on mount and after a successful top-up.
-
-**`app/(tabs)/index.tsx`** (or your home screen)
+Render on any screen inside `JazaProvider`. Balance comes from the session snapshot / `GET /v1/client/wallet`.
 
 ```tsx
 import { View } from 'react-native';
-import { JazaBalanceWidget } from '@jazadev/react-native';
+import { JazaBalance } from '@jazadev/react-native';
 
 export default function HomeScreen() {
   return (
     <View style={{ padding: 20 }}>
-      <JazaBalanceWidget />
+      <JazaBalance />
     </View>
   );
 }
 ```
 
-**Your server** (uses `@jazadev/node` with the secret key):
+Customize with children (render props):
 
-```ts
-import { Jaza } from '@jazadev/node';
-
-const jaza = new Jaza({ secretKey: process.env.JAZA_SECRET_KEY!, publicKey: process.env.JAZA_PUBLIC_KEY! });
-
-// GET /jaza/balance — resolve customerId from your auth session
-app.get('/jaza/balance', async (req, res) => {
-  const wallet = await jaza.getBalance({ customerId: req.user.jazaCustomerId });
-  res.json({ balanceCredits: wallet.balanceCredits });
-});
+```tsx
+<JazaBalance>
+  {({ balanceCredits, loading, error, refresh }) => (
+    <MyBalance value={balanceCredits} busy={loading} onRetry={refresh} />
+  )}
+</JazaBalance>
 ```
+
+`JazaBalanceWidget` remains as a deprecated alias of `JazaBalance`.
 
 ---
 
 ## 5. Top up — `JazaTopUpButton`
 
-Add the button on the same screen (or elsewhere under `JazaProvider`). It does **not** open the sheet until `onRequestToken` returns a JWT.
+Opens the checkout sheet. The SDK mints a top-up JWT from the client session — no host `onRequestToken`.
 
 ```tsx
 import { View } from 'react-native';
-import { JazaBalanceWidget, JazaTopUpButton } from '@jazadev/react-native';
-
-const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
+import { JazaBalance, JazaTopUpButton } from '@jazadev/react-native';
 
 export default function HomeScreen() {
   return (
     <View style={{ padding: 20, gap: 16 }}>
-      <JazaBalanceWidget />
-      <JazaTopUpButton
-        label="Top up credits"
-        onRequestToken={async () => {
-          const res = await fetch(`${API_BASE}/jaza/top-up-token`, {
-            method: 'POST',
-            credentials: 'include',
-          });
-          if (!res.ok) throw new Error('Could not start top-up');
-          const data = await res.json();
-          return data.token as string;
-        }}
-      />
+      <JazaBalance />
+      <JazaTopUpButton label="Top up credits" />
     </View>
   );
 }
 ```
 
-**Your server**:
+Customize with children:
 
-```ts
-// POST /jaza/top-up-token
-app.post('/jaza/top-up-token', async (req, res) => {
-  const session = await jaza.topUp({ customerId: req.user.jazaCustomerId });
-  res.json({ token: session.token });
-});
+```tsx
+<JazaTopUpButton label="Buy credits">
+  {({ onPress, loading, disabled, label, error }) => (
+    <MyButton onPress={onPress} busy={loading} title={label} />
+  )}
+</JazaTopUpButton>
 ```
 
 Optional props:
 
 - `label` — button text (default: `"Top up credits"`)
-- `style` — `ViewStyle` for the button container
+- `style` — `ViewStyle` for the default button
+- `children` — render-prop function for a custom control
 
 `JazaProvider` also accepts `onTopUpComplete` for when a payment succeeds.
 
 ---
 
-## 6. What happens after the user taps Top up
+## 6. Ledger — `JazaLedger`
 
-1. App calls your backend → you return a top-up JWT (`jaza.topUp`)
+```tsx
+import { JazaLedger } from '@jazadev/react-native';
+
+// Dashboard preview (safe inside ScrollView)
+<JazaLedger mode="preview" limit={5} />
+
+// Full transactions screen
+<JazaLedger mode="scroll" />
+```
+
+Customize rows with `ItemComponent` (props: `id`, `type`, `title`, `subtitle`, `credits`, `direction`, `statusLabel`, `createdAt`).
+
+Requires peer `@shopify/flash-list` for `mode="scroll"`.
+
+---
+
+## 7. What happens after the user taps Top up
+
+1. SDK calls `POST /v1/client/top-ups` with the session token → short-lived top-up JWT (internal)
 2. Bottom sheet opens → bundles and current balance
 3. User picks a bundle → enters phone, country, currency → sees quote
 4. User confirms → payment starts → SDK polls until success or failure
-5. Balance refreshes via `getBalance`; sheet shows success or retry
+5. Balance refreshes via `GET /v1/client/wallet`; sheet shows success or retry
 
 ---
 
@@ -229,10 +250,12 @@ Optional props:
 | Export | Description |
 |--------|-------------|
 | `JazaProvider` | Context, theme, sheet, API client |
-| `JazaBalanceWidget` | Credits balance card |
-| `JazaTopUpButton` | Opens sheet after `onRequestToken` |
+| `JazaBalance` | Credits balance card (+ children render props) |
+| `JazaBalanceWidget` | Deprecated alias of `JazaBalance` |
+| `JazaTopUpButton` | Opens sheet via session-minted top-up |
+| `JazaLedger` | Transaction list (`preview` / `scroll`) |
 | `useJaza` | Advanced access to sheet state |
-| `PublicClient` | Low-level public API client |
+| `PublicClient` | Low-level public / client API client |
 
 ---
 

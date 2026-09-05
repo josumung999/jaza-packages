@@ -3,10 +3,22 @@ export type { JazaProviderProps } from './provider/JazaProvider.js';
 export { useJaza } from './provider/JazaContext.js';
 export type { JazaContextValue, TopUpStep, ResultPhase } from './provider/JazaContext.js';
 
-export { JazaBalanceWidget } from './widgets/JazaBalanceWidget.js';
-export type { JazaBalanceWidgetProps } from './widgets/JazaBalanceWidget.js';
+export { JazaBalance, JazaBalanceWidget } from './widgets/JazaBalance.js';
+export type {
+  JazaBalanceProps,
+  JazaBalanceRenderProps,
+  JazaBalanceWidgetProps,
+} from './widgets/JazaBalance.js';
 export { JazaTopUpButton } from './widgets/JazaTopUpButton.js';
-export type { JazaTopUpButtonProps } from './widgets/JazaTopUpButton.js';
+export type {
+  JazaTopUpButtonProps,
+  JazaTopUpButtonRenderProps,
+} from './widgets/JazaTopUpButton.js';
+export { JazaLedger } from './widgets/JazaLedger.js';
+export type {
+  JazaLedgerProps,
+  JazaLedgerItemProps,
+} from './widgets/JazaLedger.js';
 
 export { PublicClient } from './api/publicClient.js';
 export type { PublicClientConfig } from './api/publicClient.js';
@@ -14,7 +26,14 @@ export { JazaSdkError } from './api/errors.js';
 export type {
   Bundle,
   CatalogCountry,
+  ClientLedgerPage,
+  ClientTopUpSession,
+  ClientWallet,
   DepositStatus,
+  InitFeature,
+  InitLedgerItem,
+  InitResult,
+  JazaAuthStatus,
   PredictProviderResponse,
   PublicDeposit,
   QuotePaymentResponse,

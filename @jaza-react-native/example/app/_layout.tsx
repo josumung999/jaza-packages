@@ -2,7 +2,7 @@ import { Stack, usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { JazaProvider } from '@jazadev/react-native';
+import { JazaProvider, type InitResult } from '@jazadev/react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { apiFetch } from '@/lib/api';
@@ -10,7 +10,7 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 function AuthGate({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -26,17 +26,25 @@ function AuthGate({ children }: { children: ReactNode }) {
     }
   }, [session, loading, pathname, router]);
 
-  const getBalance = useCallback(async () => {
+  const getSession = useCallback(async (): Promise<InitResult> => {
     if (!session) throw new Error('Not signed in');
-    const res = await apiFetch('/api/jaza/balance', {
+    const res = await apiFetch('/api/jaza/init', {
+      method: 'POST',
       userId: session.userId,
     });
+    const data = (await res.json().catch(() => ({}))) as InitResult & {
+      message?: string;
+    };
     if (!res.ok) {
-      throw new Error('Failed to load balance');
+      throw new Error(data.message ?? 'Jaza init failed');
     }
-    const data = (await res.json()) as { balanceCredits: number };
-    return data.balanceCredits;
+    return data;
   }, [session]);
+
+  const onAuthError = useCallback(() => {
+    console.warn('[jaza] session auth failed');
+    void signOut();
+  }, [signOut]);
 
   if (loading) {
     return (
@@ -54,7 +62,8 @@ function AuthGate({ children }: { children: ReactNode }) {
     <JazaProvider
       publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
       apiBaseUrl={process.env.EXPO_PUBLIC_JAZA_API_BASE_URL}
-      getBalance={getBalance}
+      getSession={getSession}
+      onAuthError={onAuthError}
       theme="dark"
     >
       {children}
@@ -71,6 +80,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="home" />
+            <Stack.Screen name="transactions" />
           </Stack>
         </AuthGate>
       </AuthProvider>

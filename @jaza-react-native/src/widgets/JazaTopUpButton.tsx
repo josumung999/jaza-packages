@@ -1,24 +1,33 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
+  View,
   type ViewStyle,
 } from 'react-native';
 import { Icon } from '../components/Icon.js';
 import { useJaza } from '../provider/JazaContext.js';
 
+export type JazaTopUpButtonRenderProps = {
+  onPress: () => void;
+  loading: boolean;
+  disabled: boolean;
+  label: string;
+  error: string | null;
+};
+
 export type JazaTopUpButtonProps = {
-  onRequestToken: () => Promise<string>;
   label?: string;
   style?: ViewStyle;
+  children?: (props: JazaTopUpButtonRenderProps) => ReactNode;
 };
 
 export function JazaTopUpButton({
-  onRequestToken,
   label = 'Top up credits',
   style,
+  children,
 }: JazaTopUpButtonProps) {
   const { theme, openTopUp } = useJaza();
   const { colors, spacing, radius } = theme;
@@ -51,27 +60,37 @@ export function JazaTopUpButton({
     },
   });
 
-  const handlePress = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      const token = await onRequestToken();
-      if (!token?.trim()) {
-        throw new Error('Top-up token was empty');
+  const handlePress = () => {
+    void (async () => {
+      setError(null);
+      setLoading(true);
+      try {
+        await openTopUp();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not start top-up');
+      } finally {
+        setLoading(false);
       }
-      await openTopUp(token.trim());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start top-up');
-    } finally {
-      setLoading(false);
-    }
+    })();
   };
 
+  const renderProps: JazaTopUpButtonRenderProps = {
+    onPress: handlePress,
+    loading,
+    disabled: loading,
+    label,
+    error,
+  };
+
+  if (children) {
+    return <>{children(renderProps)}</>;
+  }
+
   return (
-    <>
+    <View>
       <Pressable
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-        onPress={() => void handlePress()}
+        onPress={handlePress}
         disabled={loading}
       >
         {loading ? (
@@ -79,11 +98,15 @@ export function JazaTopUpButton({
         ) : (
           <>
             <Text style={styles.label}>{label}</Text>
-            <Icon name="arrow-forward" size={20} color={colors.onPrimaryContainer} />
+            <Icon
+              name="arrow-forward"
+              size={20}
+              color={colors.onPrimaryContainer}
+            />
           </>
         )}
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-    </>
+    </View>
   );
 }

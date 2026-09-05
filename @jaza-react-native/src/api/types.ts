@@ -81,3 +81,52 @@ export type TopUpCompleteResult = {
   credits: number;
   status: DepositStatus;
 };
+
+export type InitFeature = {
+  code: string;
+  creditsCost: number;
+  name?: string;
+};
+
+export type InitLedgerItem = {
+  id: string;
+  type: 'TOP_UP' | 'CONSUMPTION' | 'REFUND' | string;
+  credits: number;
+  description?: string;
+  createdAt: string;
+};
+
+/** Snapshot from host `jaza.init` / `POST /v1/client/sessions` */
+export type InitResult = {
+  sessionToken: string;
+  expiresAt: string;
+  customerId: string;
+  wallet: { balanceCredits: number };
+  features: InitFeature[];
+  ledger?: { items: InitLedgerItem[]; nextCursor?: string | null };
+};
+
+export type ClientWallet = {
+  balanceCredits: number;
+};
+
+export type ClientTopUpSession = {
+  id: string;
+  customerId: string;
+  status: string;
+  token?: string;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ClientLedgerPage = {
+  items: InitLedgerItem[];
+  nextCursor?: string | null;
+};
+
+export type JazaAuthStatus =
+  | 'INITIALIZING'
+  | 'AUTHENTICATED'
+  | 'UNAUTHENTICATED'
+  | 'ERROR';

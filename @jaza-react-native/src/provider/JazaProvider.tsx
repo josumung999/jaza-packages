@@ -7,9 +7,13 @@ import {
   type ReactNode,
 } from 'react';
 import { Appearance } from 'react-native';
+import { JazaSdkError } from '../api/errors.js';
 import { PublicClient } from '../api/publicClient.js';
 import type {
   Bundle,
+  InitFeature,
+  InitResult,
+  JazaAuthStatus,
   PredictProviderResponse,
   PublicDeposit,
   QuotePaymentResponse,
@@ -37,22 +41,83 @@ const POLL_TIMEOUT_MS = 120_000;
 export type JazaProviderProps = {
   publishableKey: string;
   apiBaseUrl?: string;
-  getBalance: () => Promise<number>;
+  /**
+   * Host POST that returns InitResult (app auth via cookies/headers).
+   * Ignored when `getSession` is also provided.
+   */
+  authEndpoint?: string;
+  /** Imperative init handshake; preferred over `authEndpoint` when both set. */
+  getSession?: () => Promise<InitResult>;
+  onAuthError?: () => void;
+  /**
+   * @deprecated Prefer `getSession` / `authEndpoint`. Used only when neither is set.
+   */
+  getBalance?: () => Promise<number>;
   onTopUpComplete?: (result: TopUpCompleteResult) => void;
   theme?: ThemePreference;
   children: ReactNode;
 };
 
+async function fetchSessionFromEndpoint(
+  authEndpoint: string,
+): Promise<InitResult> {
+  const res = await fetch(authEndpoint, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  });
+  const data = (await res.json().catch(() => ({}))) as InitResult & {
+    message?: string;
+  };
+  if (!res.ok) {
+    throw new JazaSdkError(
+      res.status,
+      data.message ?? `Init failed (${res.status})`,
+      data,
+    );
+  }
+  if (!data.sessionToken?.trim()) {
+    throw new JazaSdkError(500, 'Init response missing sessionToken', data);
+  }
+  return data;
+}
+
 export function JazaProvider({
   publishableKey,
   apiBaseUrl,
+  authEndpoint,
+  getSession,
+  onAuthError,
   getBalance,
   onTopUpComplete,
   theme: themePreference = 'system',
   children,
 }: JazaProviderProps) {
+  const useSessionAuth = Boolean(getSession || authEndpoint);
+  if (!useSessionAuth && !getBalance) {
+    throw new Error(
+      'JazaProvider requires getSession, authEndpoint, or getBalance',
+    );
+  }
+
+  const onAuthErrorRef = useRef(onAuthError);
+  onAuthErrorRef.current = onAuthError;
+  const getSessionRef = useRef(getSession);
+  getSessionRef.current = getSession;
+  const authEndpointRef = useRef(authEndpoint);
+  authEndpointRef.current = authEndpoint;
+  const getBalanceRef = useRef(getBalance);
+  getBalanceRef.current = getBalance;
+
+  const handshakeRef = useRef<() => Promise<boolean>>(async () => false);
+
   const client = useMemo(
-    () => new PublicClient({ publishableKey, apiBaseUrl }),
+    () =>
+      new PublicClient({
+        publishableKey,
+        apiBaseUrl,
+        onUnauthorized: () => handshakeRef.current(),
+      }),
     [publishableKey, apiBaseUrl],
   );
 
@@ -75,28 +140,104 @@ export function JazaProvider({
     [themePreference, systemScheme],
   );
 
+  const [status, setStatus] = useState<JazaAuthStatus>(
+    useSessionAuth ? 'INITIALIZING' : 'AUTHENTICATED',
+  );
+  const [features, setFeatures] = useState<InitFeature[]>([]);
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [balanceError, setBalanceError] = useState<string | null>(null);
+
+  const applyInitResult = useCallback(
+    (result: InitResult) => {
+      client.setSessionToken(result.sessionToken);
+      setFeatures(result.features ?? []);
+      setBalance(result.wallet.balanceCredits);
+      setStatus('AUTHENTICATED');
+      setBalanceError(null);
+    },
+    [client],
+  );
+
+  const runHandshake = useCallback(async (): Promise<boolean> => {
+    try {
+      let result: InitResult;
+      if (getSessionRef.current) {
+        result = await getSessionRef.current();
+      } else if (authEndpointRef.current) {
+        result = await fetchSessionFromEndpoint(authEndpointRef.current);
+      } else {
+        return false;
+      }
+      applyInitResult(result);
+      return true;
+    } catch {
+      client.setSessionToken(null);
+      setFeatures([]);
+      setBalance(null);
+      setStatus('UNAUTHENTICATED');
+      onAuthErrorRef.current?.();
+      return false;
+    }
+  }, [applyInitResult, client]);
+
+  handshakeRef.current = runHandshake;
 
   const refreshBalance = useCallback(async () => {
     setBalanceLoading(true);
     setBalanceError(null);
     try {
-      const value = await getBalance();
-      setBalance(value);
+      if (useSessionAuth) {
+        if (!client.getSessionToken()) {
+          const ok = await runHandshake();
+          if (!ok) {
+            setBalanceError('Not authenticated');
+            return;
+          }
+        }
+        const wallet = await client.getWallet();
+        setBalance(wallet.balanceCredits);
+        setStatus('AUTHENTICATED');
+      } else {
+        const value = await getBalanceRef.current!();
+        setBalance(value);
+      }
     } catch (err) {
       setBalanceError(
         err instanceof Error ? err.message : 'Failed to load balance',
       );
+      if (
+        useSessionAuth &&
+        err instanceof JazaSdkError &&
+        err.statusCode === 401
+      ) {
+        setStatus('UNAUTHENTICATED');
+      }
     } finally {
       setBalanceLoading(false);
     }
-  }, [getBalance]);
+  }, [client, runHandshake, useSessionAuth]);
 
   useEffect(() => {
+    if (useSessionAuth) return;
     void refreshBalance();
-  }, [refreshBalance]);
+  }, [useSessionAuth, refreshBalance]);
+
+  useEffect(() => {
+    if (!useSessionAuth) return;
+    let cancelled = false;
+    void (async () => {
+      setStatus('INITIALIZING');
+      const ok = await runHandshake();
+      if (cancelled) return;
+      if (!ok) {
+        setStatus((s) => (s === 'AUTHENTICATED' ? s : 'UNAUTHENTICATED'));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [runHandshake, useSessionAuth]);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [step, setStep] = useState<TopUpStep>('offer');
@@ -209,23 +350,24 @@ export function JazaProvider({
     }
   }, [client]);
 
-  const openTopUp = useCallback(
-    async (token: string) => {
-      client.setTopUpToken(token);
-      setTopUpToken(token);
-      setStep('offer');
-      resetPaymentState();
-      setSelectedCountryState(null);
-      setSelectedCurrencyCode(null);
-      setPhoneNational('');
-      setBundlesError(null);
-      // Open sheet immediately — do not block present() on network calls.
-      setSheetOpen(true);
-      void loadSessionData();
-      void refreshBalance();
-    },
-    [client, loadSessionData, refreshBalance, resetPaymentState],
-  );
+  const openTopUp = useCallback(async () => {
+    const session = await client.createTopUp();
+    if (!session.token?.trim()) {
+      throw new Error('Top-up session did not return a token');
+    }
+    const token = session.token.trim();
+    client.setTopUpToken(token);
+    setTopUpToken(token);
+    setStep('offer');
+    resetPaymentState();
+    setSelectedCountryState(null);
+    setSelectedCurrencyCode(null);
+    setPhoneNational('');
+    setBundlesError(null);
+    setSheetOpen(true);
+    void loadSessionData();
+    void refreshBalance();
+  }, [client, loadSessionData, refreshBalance, resetPaymentState]);
 
   const closeTopUp = useCallback(() => {
     clearPoll();
@@ -278,7 +420,8 @@ export function JazaProvider({
               clearPoll();
               setResultPhase('failure');
               setFailureReason(
-                updated.failureReason ?? `Payment ${updated.status.toLowerCase()}`,
+                updated.failureReason ??
+                  `Payment ${updated.status.toLowerCase()}`,
               );
             }
           } catch {
@@ -351,7 +494,6 @@ export function JazaProvider({
     setFailureReason(null);
   }, [clearPoll]);
 
-  // Debounced predict
   useEffect(() => {
     if (step !== 'payment' || !selectedCountry) return;
     const digits = phoneNational.replace(/\D/g, '');
@@ -399,7 +541,6 @@ export function JazaProvider({
     step,
   ]);
 
-  // Quote refresh
   useEffect(() => {
     if (
       step !== 'payment' ||
@@ -439,10 +580,13 @@ export function JazaProvider({
       themePreference,
       publishableKey,
       client,
+      status,
+      balanceCredits: balance,
       balance,
       balanceLoading,
       balanceError,
       refreshBalance,
+      features,
       sheetOpen,
       step,
       resultPhase,
@@ -481,10 +625,12 @@ export function JazaProvider({
       themePreference,
       publishableKey,
       client,
+      status,
       balance,
       balanceLoading,
       balanceError,
       refreshBalance,
+      features,
       sheetOpen,
       step,
       resultPhase,

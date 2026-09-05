@@ -1,9 +1,28 @@
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { JazaBalanceWidget, JazaTopUpButton } from '@jazadev/react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {
+  JazaBalance,
+  JazaLedger,
+  JazaTopUpButton,
+  useJaza,
+} from '@jazadev/react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/auth-context';
-import { apiFetch } from '@/lib/api';
 import { useRouter } from 'expo-router';
+
+function SessionDebug() {
+  const { status, balanceCredits } = useJaza();
+  return (
+    <Text style={styles.debug}>
+      Jaza status: {status} · balanceCredits: {balanceCredits ?? '—'}
+    </Text>
+  );
+}
 
 export default function HomeScreen() {
   const { session, signOut } = useAuth();
@@ -15,8 +34,9 @@ export default function HomeScreen() {
   }
 
   return (
-    <View
-      style={[
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={[
         styles.root,
         { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
       ]}
@@ -37,42 +57,34 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
+      <SessionDebug />
+
       <Text style={styles.section}>Your balance</Text>
-      <JazaBalanceWidget />
+      <JazaBalance />
 
       <Text style={[styles.section, { marginTop: 24 }]}>Top up</Text>
-      <JazaTopUpButton
-        label="Buy credit bundles"
-        onRequestToken={async () => {
-          const res = await apiFetch('/api/jaza/top-up-token', {
-            method: 'POST',
-            userId: session.userId,
-          });
-          const data = (await res.json().catch(() => ({}))) as {
-            message?: string;
-            token?: string;
-          };
-          if (!res.ok || !data.token?.trim()) {
-            const message = data.message ?? `Could not start top-up (${res.status})`;
-            Alert.alert('Top up failed', message);
-            throw new Error(message);
-          }
-          return data.token;
-        }}
-      />
+      <JazaTopUpButton label="Buy credit bundles" />
 
-      <Text style={styles.hint}>
-        Customer ID: {session.customerId}
-      </Text>
-    </View>
+      <View style={styles.ledgerHeader}>
+        <Text style={styles.section}>Recent activity</Text>
+        <Pressable onPress={() => router.push('/transactions')}>
+          <Text style={styles.link}>See all</Text>
+        </Pressable>
+      </View>
+      <JazaLedger mode="preview" limit={5} />
+
+      <Text style={styles.hint}>Customer ID: {session.customerId}</Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  scroll: {
     flex: 1,
-    paddingHorizontal: 20,
     backgroundColor: '#f8fafc',
+  },
+  root: {
+    paddingHorizontal: 20,
     gap: 12,
   },
   header: {
@@ -98,6 +110,11 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontWeight: '500',
   },
+  debug: {
+    fontSize: 12,
+    color: '#0d9488',
+    fontFamily: 'monospace',
+  },
   section: {
     fontSize: 13,
     fontWeight: '600',
@@ -105,8 +122,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
+  ledgerHeader: {
+    marginTop: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  link: {
+    color: '#0d9488',
+    fontWeight: '600',
+    fontSize: 14,
+  },
   hint: {
-    marginTop: 'auto',
+    marginTop: 24,
     fontSize: 12,
     color: '#94a3b8',
   },
