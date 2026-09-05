@@ -25,26 +25,26 @@ const customer = await jaza.createCustomer({
   email: 'amina@example.com', // and/or phoneNumber
 });
 
-// 2. Issue a top-up JWT for your frontend SDK
-const session = await jaza.topUp({ customerId: customer.id });
-// Pass session.token + jaza.publicKey to @jazadev/react-native (JazaProvider + JazaTopUpButton).
-// Frontend: X-Jaza-Public-Key + Authorization: Bearer <token>
-// → bundles, predict, quote, deposits via @jazadev/react-native
+// 2. Host BFF: mint a client session for the mobile SDK (POST /api/jaza/init)
+const init = await jaza.init({ customerId: customer.id });
+// Return init to the app: sessionToken + wallet/features snapshot.
+// The app pairs sessionToken with your publishable key for client routes.
+// Consume still happens here on the server — never from the device.
 
-// 3. Read balance (for your app’s getBalance BFF → @jazadev/react-native)
-const wallet = await jaza.getBalance({ customerId: customer.id });
-console.log(wallet.balanceCredits);
-
-// 4. Meter usage
+// 3. Meter usage on billable host routes (secret key only)
 await jaza.consume({
   customerId: customer.id,
   featureCode: 'SEND_MESSAGE',
   idempotencyKey: `msg_${Date.now()}`,
 });
 
-// 5. Poll top-up session status
-const status = await jaza.check({ topUpId: session.id });
-console.log(status.status); // PENDING until deposits complete
+// Optional: server-minted top-up JWT (advanced). Prefer client session
+// POST /v1/client/top-ups once the RN SDK uses init.
+const session = await jaza.topUp({ customerId: customer.id });
+await jaza.check({ topUpId: session.id });
+
+const wallet = await jaza.getBalance({ customerId: customer.id });
+console.log(wallet.balanceCredits);
 ```
 
 ## API surface
@@ -52,9 +52,10 @@ console.log(status.status); // PENDING until deposits complete
 | Method | Description |
 |--------|-------------|
 | `createCustomer({ name, email?, phoneNumber? })` | Returns `cus_…` |
-| `topUp({ customerId })` | Returns session + JWT `token` |
+| `init({ customerId })` | Client session JWT + wallet/features/ledger snapshot |
+| `topUp({ customerId })` | Top-up session + JWT `token` (advanced / legacy BFF) |
 | `getBalance({ customerId })` | Wallet with `balanceCredits` |
-| `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet |
+| `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet (server only) |
 | `check({ topUpId })` | Session status |
 
 Errors throw `JazaError` with `statusCode`, `code`, and `raw`.

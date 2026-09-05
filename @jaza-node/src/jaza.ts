@@ -5,6 +5,8 @@ import type {
   ConsumeResult,
   CreateCustomerParams,
   Customer,
+  InitParams,
+  InitResult,
   JazaConfig,
   TopUpSession,
   Wallet,
@@ -89,11 +91,9 @@ function assertConsume(params: ConsumeParams): void {
  * ```ts
  * const jaza = new Jaza({ secretKey, publicKey });
  * const customer = await jaza.createCustomer({ name: 'Amina', email: 'a@x.com' });
- * const session = await jaza.topUp({ customerId: customer.id });
- * // hand session.token + publicKey to your frontend SDK
+ * const init = await jaza.init({ customerId: customer.id });
+ * // Pass init (sessionToken + snapshot) to your frontend via POST /api/jaza/init
  * await jaza.consume({ customerId: customer.id, featureCode: 'SEND_MESSAGE', idempotencyKey: '...' });
- * const wallet = await jaza.getBalance({ customerId: customer.id });
- * await jaza.check({ topUpId: session.id });
  * ```
  */
 export class Jaza {
@@ -119,7 +119,23 @@ export class Jaza {
     });
   }
 
-  /** Issue a top-up session JWT for the frontend (bundles / future deposits). */
+  /**
+   * Mint a client session for the mobile/web SDK (`sessionToken` + wallet/features snapshot).
+   * Host apps typically expose this as `POST /api/jaza/init`. Cannot debit — use `consume` on the server.
+   */
+  init(params: InitParams): Promise<InitResult> {
+    if (!params?.customerId?.trim()) {
+      throw new JazaError('customerId is required', {
+        statusCode: 0,
+        code: 'invalid_request',
+      });
+    }
+    return this.http.request<InitResult>('POST', '/v1/client/sessions', {
+      customerId: params.customerId,
+    });
+  }
+
+  /** Issue a top-up session JWT for the frontend (bundles / deposits). Prefer client session top-up mint when using init. */
   topUp(params: { customerId: string }): Promise<TopUpSession> {
     if (!params?.customerId?.trim()) {
       throw new JazaError('customerId is required', {
@@ -149,7 +165,7 @@ export class Jaza {
     );
   }
 
-  /** Debit credits for a customer (feature code or raw credits). */
+  /** Debit credits for a customer (feature code or raw credits). Secret key only. */
   consume(params: ConsumeParams): Promise<ConsumeResult> {
     assertConsume(params);
     return this.http.request<ConsumeResult>('POST', '/v1/credits/consume', {

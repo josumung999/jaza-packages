@@ -89,6 +89,36 @@ describe('Jaza', () => {
     expect(jaza.publicKey).toBe(publicKey);
   });
 
+  it('init returns sessionToken and snapshot', async () => {
+    mockFetch((url, init) => {
+      expect(url).toBe('https://api.jaza.dev/v1/client/sessions');
+      expect(init?.method).toBe('POST');
+      expect(JSON.parse(String(init?.body))).toEqual({ customerId: 'cus_1' });
+      return new Response(
+        JSON.stringify({
+          sessionToken: 'client.jwt.here',
+          expiresAt: '2026-01-01T01:00:00.000Z',
+          customerId: 'cus_1',
+          wallet: { balanceCredits: 40 },
+          features: [{ code: 'SEND_MESSAGE', creditsCost: 5, name: 'Send' }],
+          ledger: { items: [], nextCursor: null },
+        }),
+        { status: 201 },
+      );
+    });
+
+    const jaza = new Jaza({ secretKey, publicKey });
+    const result = await jaza.init({ customerId: 'cus_1' });
+    expect(result.sessionToken).toBe('client.jwt.here');
+    expect(result.wallet.balanceCredits).toBe(40);
+    expect(result.features[0]?.code).toBe('SEND_MESSAGE');
+  });
+
+  it('init requires customerId', () => {
+    const jaza = new Jaza({ secretKey, publicKey });
+    expect(() => jaza.init({ customerId: '' })).toThrow(JazaError);
+  });
+
   it('getBalance returns wallet', async () => {
     mockFetch((url, init) => {
       expect(url).toBe('https://api.jaza.dev/v1/wallets/by-user/cus_1');

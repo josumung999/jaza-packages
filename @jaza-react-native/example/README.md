@@ -8,6 +8,16 @@ Private Expo demo for [`@jazadev/react-native`](../). **Not published to npm.** 
 2. First sign-in creates a Jaza customer via `@jazadev/node` and saves `customerId`
 3. Home screen: `JazaBalanceWidget` + `JazaTopUpButton` (opens the SDK bottom sheet)
 
+## Host BFF routes (`app/api/jaza/`)
+
+| Route | Role |
+|-------|------|
+| `POST /api/jaza/init` | `jaza.init({ customerId })` → client session + snapshot (Step 3+) |
+| `GET /api/jaza/balance` | Legacy `getBalance` for current Provider |
+| `POST /api/jaza/top-up-token` | Legacy `topUp` JWT for current TopUpButton |
+
+Demo auth: send `X-User-Id` (local user id). Keep the secret key in these routes only.
+
 ## Setup
 
 From the monorepo root (`packages/`):

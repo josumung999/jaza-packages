@@ -73,6 +73,34 @@ export type ConsumeResult = {
   ledgerEntry: LedgerEntry;
 };
 
+export type InitParams = {
+  customerId: string;
+};
+
+export type InitFeature = {
+  code: string;
+  creditsCost: number;
+  name?: string;
+};
+
+export type InitLedgerItem = {
+  id: string;
+  type: 'TOP_UP' | 'CONSUMPTION' | 'REFUND' | string;
+  credits: number;
+  description?: string;
+  createdAt: string;
+};
+
+/** Snapshot from `jaza.init` / `POST /v1/client/sessions` */
+export type InitResult = {
+  sessionToken: string;
+  expiresAt: string;
+  customerId: string;
+  wallet: { balanceCredits: number };
+  features: InitFeature[];
+  ledger?: { items: InitLedgerItem[]; nextCursor?: string | null };
+};
+
 export type JazaErrorBody = {
   message?: string;
   statusCode?: number;
