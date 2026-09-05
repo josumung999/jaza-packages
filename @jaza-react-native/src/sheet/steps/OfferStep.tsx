@@ -22,15 +22,33 @@ export function OfferStep() {
     selectedBundle,
     setSelectedBundle,
     goToPayment,
+    topUpSource,
+    paywallFeatureCode,
+    getFeatureCost,
+    features,
   } = useJaza();
   const { colors, spacing, radius } = theme;
+
+  const showLowBalanceAlert = topUpSource === 'paywall';
+  const paywallFeature = paywallFeatureCode
+    ? features.find((f) => f.code === paywallFeatureCode)
+    : undefined;
+  const paywallCost = paywallFeatureCode
+    ? getFeatureCost(paywallFeatureCode)
+    : null;
+  const lowBalanceMessage =
+    paywallCost != null
+      ? `Your balance is too low for this action (${formatCredits(paywallCost)} credits${
+          paywallFeature?.name ? ` · ${paywallFeature.name}` : ''
+        }). Top up to continue.`
+      : 'Your balance is running low. Top up to continue.';
 
   const styles = StyleSheet.create({
     balanceCard: {
       backgroundColor: colors.surfaceContainer,
       borderRadius: radius.xl,
       padding: spacing.md,
-      marginBottom: spacing.lg,
+      marginBottom: showLowBalanceAlert ? spacing.sm : spacing.lg,
     },
     balanceLabel: {
       color: colors.onSurfaceVariant,
@@ -46,6 +64,24 @@ export function OfferStep() {
       color: colors.onSurface,
       fontSize: 48,
       fontWeight: '700',
+    },
+    alert: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
+      backgroundColor: 'rgba(232, 185, 49, 0.14)',
+      borderRadius: radius.lg,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      marginBottom: spacing.lg,
+      borderWidth: 1,
+      borderColor: 'rgba(232, 185, 49, 0.35)',
+    },
+    alertText: {
+      flex: 1,
+      color: colors.onSurface,
+      fontSize: 14,
+      lineHeight: 20,
     },
     title: {
       color: colors.onSurface,
@@ -147,7 +183,7 @@ export function OfferStep() {
       {balanceLoading && balance === null ? (
         <BalanceCardSkeleton
           theme={theme}
-          style={{ marginBottom: spacing.lg }}
+          style={{ marginBottom: showLowBalanceAlert ? spacing.sm : spacing.lg }}
         />
       ) : (
         <View style={styles.balanceCard}>
@@ -160,6 +196,17 @@ export function OfferStep() {
           </View>
         </View>
       )}
+
+      {showLowBalanceAlert ? (
+        <View
+          style={styles.alert}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          <Icon name="info" size={20} color="#e8b931" />
+          <Text style={styles.alertText}>{lowBalanceMessage}</Text>
+        </View>
+      ) : null}
 
       <Text style={styles.title}>Top-up Credits</Text>
 

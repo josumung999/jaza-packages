@@ -23,9 +23,9 @@ export function TopUpBottomSheet() {
   const insets = useSafeAreaInsets();
   const ref = useRef<BottomSheet>(null);
 
-  /** Bundle picker can expand; payment + polling stay under half the screen. */
+  /** Bundle picker opens tall so offers + CTA fit; payment/polling stay compact. */
   const snapPoints = useMemo(() => {
-    if (step === 'offer') return ['55%', '92%'];
+    if (step === 'offer') return ['88%'];
     return ['48%'];
   }, [step]);
 
@@ -110,7 +110,7 @@ export function TopUpBottomSheet() {
           snapPoints={snapPoints}
           enablePanDownToClose={false}
           enableDynamicSizing={false}
-          enableOverDrag={step === 'offer'}
+          enableOverDrag={false}
           onClose={requestClose}
           backdropComponent={renderBackdrop}
           keyboardBehavior="interactive"

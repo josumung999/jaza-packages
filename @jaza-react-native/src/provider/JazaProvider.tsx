@@ -36,7 +36,7 @@ import {
   type JazaTheme,
   type ThemePreference,
 } from '../theme/tokens.js';
-import { JazaContext, type ResultPhase, type TopUpStep } from './JazaContext.js';
+import { JazaContext, type ResultPhase, type TopUpSource, type TopUpStep } from './JazaContext.js';
 import { TopUpBottomSheet } from '../sheet/TopUpBottomSheet.js';
 
 const PREDICT_DEBOUNCE_MS = 500;
@@ -255,6 +255,10 @@ export function JazaProvider({
   }, [runHandshake, useSessionAuth]);
 
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [topUpSource, setTopUpSource] = useState<TopUpSource>('topup');
+  const [paywallFeatureCode, setPaywallFeatureCode] = useState<string | null>(
+    null,
+  );
   const [step, setStep] = useState<TopUpStep>('offer');
   const [resultPhase, setResultPhase] = useState<ResultPhase>('loading');
   const [topUpToken, setTopUpToken] = useState<string | null>(null);
@@ -365,30 +369,41 @@ export function JazaProvider({
     }
   }, [client]);
 
+  const openTopUpInternal = useCallback(
+    async (source: TopUpSource, featureCode?: string | null) => {
+      const session = await client.createTopUp();
+      if (!session.token?.trim()) {
+        throw new Error('Top-up session did not return a token');
+      }
+      const token = session.token.trim();
+      client.setTopUpToken(token);
+      setTopUpToken(token);
+      setTopUpSource(source);
+      setPaywallFeatureCode(
+        source === 'paywall' ? featureCode?.trim() || null : null,
+      );
+      setStep('offer');
+      resetPaymentState();
+      setSelectedCountryState(null);
+      setSelectedCurrencyCode(null);
+      setPhoneNational('');
+      setBundlesError(null);
+      setSheetOpen(true);
+      void loadSessionData();
+      void refreshBalance();
+    },
+    [client, loadSessionData, refreshBalance, resetPaymentState],
+  );
+
   const openTopUp = useCallback(async () => {
-    const session = await client.createTopUp();
-    if (!session.token?.trim()) {
-      throw new Error('Top-up session did not return a token');
-    }
-    const token = session.token.trim();
-    client.setTopUpToken(token);
-    setTopUpToken(token);
-    setStep('offer');
-    resetPaymentState();
-    setSelectedCountryState(null);
-    setSelectedCurrencyCode(null);
-    setPhoneNational('');
-    setBundlesError(null);
-    setSheetOpen(true);
-    void loadSessionData();
-    void refreshBalance();
-  }, [client, loadSessionData, refreshBalance, resetPaymentState]);
+    await openTopUpInternal('topup');
+  }, [openTopUpInternal]);
 
   const openPaywall = useCallback(
-    async (_opts?: { featureCode?: string }) => {
-      await openTopUp();
+    async (opts?: { featureCode?: string }) => {
+      await openTopUpInternal('paywall', opts?.featureCode);
     },
-    [openTopUp],
+    [openTopUpInternal],
   );
 
   const getFeatureCostFn = useCallback(
@@ -407,6 +422,8 @@ export function JazaProvider({
     setSheetOpen(false);
     client.setTopUpToken(null);
     setTopUpToken(null);
+    setTopUpSource('topup');
+    setPaywallFeatureCode(null);
     setStep('offer');
     resetPaymentState();
   }, [clearPoll, client, resetPaymentState]);
@@ -654,6 +671,8 @@ export function JazaProvider({
       openPaywall,
       closePaywall,
       sheetOpen,
+      topUpSource,
+      paywallFeatureCode,
       step,
       resultPhase,
       topUpToken,
@@ -702,6 +721,8 @@ export function JazaProvider({
       getFeatureCostFn,
       canAffordFn,
       sheetOpen,
+      topUpSource,
+      paywallFeatureCode,
       step,
       resultPhase,
       topUpToken,

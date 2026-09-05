@@ -17,6 +17,9 @@ export type TopUpStep = 'offer' | 'payment' | 'processing';
 
 export type ResultPhase = 'loading' | 'success' | 'failure';
 
+/** Why the top-up sheet was opened */
+export type TopUpSource = 'topup' | 'paywall';
+
 export type JazaContextValue = {
   theme: JazaTheme;
   themePreference: ThemePreference;
@@ -48,6 +51,10 @@ export type JazaContextValue = {
   openPaywall: (opts?: { featureCode?: string }) => Promise<void>;
   closePaywall: () => void;
   sheetOpen: boolean;
+  /** `paywall` when opened due to insufficient credits; otherwise `topup`. */
+  topUpSource: TopUpSource;
+  /** Feature that triggered the paywall, when known. */
+  paywallFeatureCode: string | null;
   step: TopUpStep;
   resultPhase: ResultPhase;
   topUpToken: string | null;
