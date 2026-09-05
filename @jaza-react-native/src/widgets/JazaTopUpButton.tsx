@@ -8,6 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Icon } from '../components/Icon.js';
+import { t } from '../i18n/t.js';
 import { useJaza } from '../provider/JazaContext.js';
 
 export type JazaTopUpButtonRenderProps = {
@@ -25,14 +26,15 @@ export type JazaTopUpButtonProps = {
 };
 
 export function JazaTopUpButton({
-  label = 'Top up credits',
+  label,
   style,
   children,
 }: JazaTopUpButtonProps) {
-  const { theme, openTopUp } = useJaza();
+  const { theme, locale, openTopUp } = useJaza();
   const { colors, spacing, radius } = theme;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const displayLabel = label ?? t(locale, 'topUp.defaultLabel');
 
   const styles = StyleSheet.create({
     button: {
@@ -67,7 +69,9 @@ export function JazaTopUpButton({
       try {
         await openTopUp();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not start top-up');
+        setError(
+          err instanceof Error ? err.message : t(locale, 'topUp.startError'),
+        );
       } finally {
         setLoading(false);
       }
@@ -78,7 +82,7 @@ export function JazaTopUpButton({
     onPress: handlePress,
     loading,
     disabled: loading,
-    label,
+    label: displayLabel,
     error,
   };
 
@@ -97,7 +101,7 @@ export function JazaTopUpButton({
           <ActivityIndicator color={colors.onPrimaryContainer} />
         ) : (
           <>
-            <Text style={styles.label}>{label}</Text>
+            <Text style={styles.label}>{displayLabel}</Text>
             <Icon
               name="arrow-forward"
               size={20}

@@ -5,6 +5,7 @@ import type { JazaTheme } from '../theme/tokens.js';
 type BundleListSkeletonProps = {
   theme: JazaTheme;
   count?: number;
+  accessibilityLabel?: string;
 };
 
 function BundleRowSkeleton({ theme }: { theme: JazaTheme }) {
@@ -48,9 +49,13 @@ function BundleRowSkeleton({ theme }: { theme: JazaTheme }) {
 }
 
 /** Placeholder rows matching bundle card layout while offers load. */
-export function BundleListSkeleton({ theme, count = 3 }: BundleListSkeletonProps) {
+export function BundleListSkeleton({
+  theme,
+  count = 3,
+  accessibilityLabel = 'Loading bundles',
+}: BundleListSkeletonProps) {
   return (
-    <View accessibilityRole="progressbar" accessibilityLabel="Loading bundles">
+    <View accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel}>
       {Array.from({ length: count }, (_, index) => (
         <BundleRowSkeleton key={index} theme={theme} />
       ))}

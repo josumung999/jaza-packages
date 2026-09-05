@@ -1,4 +1,6 @@
 import type { InitLedgerItem } from '../api/types.js';
+import type { JazaLocale } from '../i18n/types.js';
+import { t } from '../i18n/t.js';
 
 export type JazaLedgerItemStatus = 'success' | 'failure' | 'pending';
 
@@ -31,14 +33,14 @@ function truncateLabel(label: string, max: number): string {
 }
 
 /** Kind shown in the subtitle (Top-up / Purchase). */
-export function ledgerKindLabel(type: string): string {
+export function ledgerKindLabel(type: string, locale: JazaLocale = 'en'): string {
   switch (type) {
     case 'TOP_UP':
-      return 'Top-up';
+      return t(locale, 'ledger.kind.topUp');
     case 'CONSUMPTION':
-      return 'Purchase';
+      return t(locale, 'ledger.kind.purchase');
     case 'REFUND':
-      return 'Refund';
+      return t(locale, 'ledger.kind.refund');
     default:
       return type;
   }
@@ -48,18 +50,22 @@ export function ledgerKindLabel(type: string): string {
  * Primary title: provider (top-up) or feature (consumption).
  * Capped at 20 characters so the amount stays visible.
  */
-export function ledgerTitleLabel(entry: InitLedgerItem): string {
+export function ledgerTitleLabel(
+  entry: InitLedgerItem,
+  locale: JazaLocale = 'en',
+): string {
   let label: string;
   if (entry.type === 'TOP_UP') {
-    label = entry.provider?.trim() || 'Mobile Money';
+    label =
+      entry.provider?.trim() || t(locale, 'ledger.title.mobileMoney');
   } else if (entry.type === 'CONSUMPTION') {
     label =
       entry.featureName?.trim() ||
       entry.featureCode?.trim() ||
       entry.description?.trim() ||
-      'Purchase';
+      t(locale, 'ledger.kind.purchase');
   } else if (entry.type === 'REFUND') {
-    label = entry.description?.trim() || 'Refund';
+    label = entry.description?.trim() || t(locale, 'ledger.kind.refund');
   } else {
     label = entry.description?.trim() || entry.type;
   }
@@ -109,7 +115,10 @@ export function formatLedgerSubtitle(iso: string): string {
   return formatLedgerDateTime(iso);
 }
 
-export function ledgerSectionLabel(iso: string): string {
+export function ledgerSectionLabel(
+  iso: string,
+  locale: JazaLocale = 'en',
+): string {
   try {
     const d = new Date(iso);
     const today = new Date();
@@ -119,23 +128,24 @@ export function ledgerSectionLabel(iso: string): string {
       a.getFullYear() === b.getFullYear() &&
       a.getMonth() === b.getMonth() &&
       a.getDate() === b.getDate();
-    if (sameDay(d, today)) return 'Today';
-    if (sameDay(d, yesterday)) return 'Yesterday';
+    if (sameDay(d, today)) return t(locale, 'ledger.section.today');
+    if (sameDay(d, yesterday)) return t(locale, 'ledger.section.yesterday');
     return d.toLocaleDateString(undefined, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
   } catch {
-    return 'Earlier';
+    return t(locale, 'ledger.section.earlier');
   }
 }
 
 export function toLedgerItemProps(
   entry: InitLedgerItem,
-  opts?: { subtitleStyle?: LedgerSubtitleStyle },
+  opts?: { subtitleStyle?: LedgerSubtitleStyle; locale?: JazaLocale },
 ): JazaLedgerItemProps {
-  const kind = ledgerKindLabel(entry.type);
+  const locale = opts?.locale ?? 'en';
+  const kind = ledgerKindLabel(entry.type, locale);
   const when =
     opts?.subtitleStyle === 'date-time'
       ? formatLedgerDateTime(entry.createdAt)
@@ -143,12 +153,12 @@ export function toLedgerItemProps(
   return {
     id: entry.id,
     type: entry.type,
-    title: ledgerTitleLabel(entry),
+    title: ledgerTitleLabel(entry, locale),
     subtitle: `${kind} · ${when}`,
     credits: entry.credits,
     direction: directionForType(entry.type),
     status: 'success',
-    statusLabel: 'Completed',
+    statusLabel: t(locale, 'ledger.status.completed'),
     createdAt: entry.createdAt,
   };
 }
@@ -161,11 +171,12 @@ export type LedgerListRow =
 /** @deprecated Prefer groupLedgerIntoSections */
 export function groupLedgerIntoRows(
   items: JazaLedgerItemProps[],
+  locale: JazaLocale = 'en',
 ): LedgerListRow[] {
   const rows: LedgerListRow[] = [];
   let lastSection: string | null = null;
   for (const item of items) {
-    const label = ledgerSectionLabel(item.createdAt);
+    const label = ledgerSectionLabel(item.createdAt, locale);
     if (label !== lastSection) {
       rows.push({ kind: 'header', key: `h-${label}-${item.id}`, label });
       lastSection = label;
@@ -177,10 +188,11 @@ export function groupLedgerIntoRows(
 
 export function groupLedgerIntoSections(
   items: JazaLedgerItemProps[],
+  locale: JazaLocale = 'en',
 ): LedgerSection[] {
   const sections: LedgerSection[] = [];
   for (const item of items) {
-    const label = ledgerSectionLabel(item.createdAt);
+    const label = ledgerSectionLabel(item.createdAt, locale);
     const last = sections[sections.length - 1];
     if (last && last.label === label) {
       last.items.push(item);

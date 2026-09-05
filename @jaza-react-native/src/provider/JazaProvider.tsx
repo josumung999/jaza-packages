@@ -36,6 +36,7 @@ import {
   type JazaTheme,
   type ThemePreference,
 } from '../theme/tokens.js';
+import type { JazaLocale } from '../i18n/types.js';
 import { JazaContext, type ResultPhase, type TopUpSource, type TopUpStep } from './JazaContext.js';
 import { TopUpBottomSheet } from '../sheet/TopUpBottomSheet.js';
 
@@ -60,6 +61,8 @@ export type JazaProviderProps = {
   getBalance?: () => Promise<number>;
   onTopUpComplete?: (result: TopUpCompleteResult) => void;
   theme?: ThemePreference;
+  /** Built-in UI locale. Default `en`. */
+  locale?: JazaLocale;
   children: ReactNode;
 };
 
@@ -96,6 +99,7 @@ export function JazaProvider({
   getBalance,
   onTopUpComplete,
   theme: themePreference = 'system',
+  locale: localeProp = 'en',
   children,
 }: JazaProviderProps) {
   const useSessionAuth = Boolean(getSession || authEndpoint);
@@ -144,6 +148,14 @@ export function JazaProvider({
     () => resolveTheme(themePreference, systemScheme),
     [themePreference, systemScheme],
   );
+
+  const [locale, setLocaleState] = useState<JazaLocale>(localeProp);
+  useEffect(() => {
+    setLocaleState(localeProp);
+  }, [localeProp]);
+  const setLocale = useCallback((next: JazaLocale) => {
+    setLocaleState(next);
+  }, []);
 
   const [status, setStatus] = useState<JazaAuthStatus>(
     useSessionAuth ? 'INITIALIZING' : 'AUTHENTICATED',
@@ -654,6 +666,8 @@ export function JazaProvider({
     () => ({
       theme,
       themePreference,
+      locale,
+      setLocale,
       publishableKey,
       client,
       status,
@@ -708,6 +722,8 @@ export function JazaProvider({
     [
       theme,
       themePreference,
+      locale,
+      setLocale,
       publishableKey,
       client,
       status,

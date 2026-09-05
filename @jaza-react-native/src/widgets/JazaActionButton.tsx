@@ -8,6 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useJaza } from '../provider/JazaContext.js';
+import { t } from '../i18n/t.js';
 
 export type JazaActionButtonRenderProps = {
   onPress: () => void;
@@ -41,6 +42,7 @@ export function JazaActionButton({
 }: JazaActionButtonProps) {
   const {
     theme,
+    locale,
     balanceCredits,
     getFeatureCost,
     canAfford,
@@ -55,7 +57,7 @@ export function JazaActionButton({
   const afford = known ? canAfford(featureCode) : false;
   const displayLabel = label ?? featureCode;
   const error = !known
-    ? `Unknown feature: ${featureCode}`
+    ? t(locale, 'action.unknownFeature', { code: featureCode })
     : actionError;
 
   const styles = StyleSheet.create({
@@ -102,7 +104,7 @@ export function JazaActionButton({
         await onPress();
       } catch (err) {
         setActionError(
-          err instanceof Error ? err.message : 'Action failed',
+          err instanceof Error ? err.message : t(locale, 'action.failed'),
         );
       } finally {
         setLoading(false);
@@ -138,7 +140,9 @@ export function JazaActionButton({
           <>
             <Text style={styles.label}>{displayLabel}</Text>
             {known ? (
-              <Text style={styles.meta}>{cost} credits</Text>
+              <Text style={styles.meta}>
+                {t(locale, 'action.creditsMeta', { cost: cost! })}
+              </Text>
             ) : null}
           </>
         )}

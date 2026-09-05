@@ -7,6 +7,7 @@ import {
 import { BalanceCardSkeleton } from '../../components/BalanceCardSkeleton.js';
 import { BundleListSkeleton } from '../../components/BundleListSkeleton.js';
 import { Icon } from '../../components/Icon.js';
+import { t } from '../../i18n/t.js';
 import { useJaza } from '../../provider/JazaContext.js';
 import type { Bundle } from '../../api/types.js';
 import { formatCredits, formatUsd } from '../../utils/helpers.js';
@@ -14,6 +15,7 @@ import { formatCredits, formatUsd } from '../../utils/helpers.js';
 export function OfferStep() {
   const {
     theme,
+    locale,
     balance,
     balanceLoading,
     bundles,
@@ -38,10 +40,11 @@ export function OfferStep() {
     : null;
   const lowBalanceMessage =
     paywallCost != null
-      ? `Your balance is too low for this action (${formatCredits(paywallCost)} credits${
-          paywallFeature?.name ? ` · ${paywallFeature.name}` : ''
-        }). Top up to continue.`
-      : 'Your balance is running low. Top up to continue.';
+      ? t(locale, 'topUp.lowBalanceWithCost', {
+          cost: formatCredits(paywallCost),
+          feature: paywallFeature?.name ? ` · ${paywallFeature.name}` : '',
+        })
+      : t(locale, 'topUp.lowBalance');
 
   const styles = StyleSheet.create({
     balanceCard: {
@@ -69,13 +72,13 @@ export function OfferStep() {
       flexDirection: 'row',
       alignItems: 'flex-start',
       gap: spacing.sm,
-      backgroundColor: 'rgba(232, 185, 49, 0.14)',
+      backgroundColor: colors.warningContainer,
       borderRadius: radius.lg,
       paddingVertical: spacing.sm,
       paddingHorizontal: spacing.md,
       marginBottom: spacing.lg,
       borderWidth: 1,
-      borderColor: 'rgba(232, 185, 49, 0.35)',
+      borderColor: `${colors.warning}59`,
     },
     alertText: {
       flex: 1,
@@ -162,10 +165,10 @@ export function OfferStep() {
           <Text
             style={[styles.bundleLabel, selected && styles.bundleLabelSelected]}
           >
-            {bundle.label ?? 'Bundle'}
+            {bundle.label ?? t(locale, 'common.bundle')}
           </Text>
           <Text style={styles.bundleSub}>
-            {formatCredits(bundle.credits)} credits
+            {formatCredits(bundle.credits)} {t(locale, 'common.credits')}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
@@ -183,11 +186,14 @@ export function OfferStep() {
       {balanceLoading && balance === null ? (
         <BalanceCardSkeleton
           theme={theme}
-          style={{ marginBottom: showLowBalanceAlert ? spacing.sm : spacing.lg }}
+          style={{
+            marginBottom: showLowBalanceAlert ? spacing.sm : spacing.lg,
+          }}
+          accessibilityLabel={t(locale, 'balance.loading')}
         />
       ) : (
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Current Balance</Text>
+          <Text style={styles.balanceLabel}>{t(locale, 'balance.current')}</Text>
           <View style={styles.balanceRow}>
             <Icon name="bolt" size={28} color={colors.primary} />
             <Text style={styles.balanceValue}>
@@ -203,23 +209,26 @@ export function OfferStep() {
           accessibilityRole="alert"
           accessibilityLiveRegion="polite"
         >
-          <Icon name="info" size={20} color="#e8b931" />
+          <Icon name="info" size={20} color={colors.warning} />
           <Text style={styles.alertText}>{lowBalanceMessage}</Text>
         </View>
       ) : null}
 
-      <Text style={styles.title}>Top-up Credits</Text>
+      <Text style={styles.title}>{t(locale, 'topUp.title')}</Text>
 
       {bundlesError ? <Text style={styles.error}>{bundlesError}</Text> : null}
 
       {bundlesLoading ? (
-        <BundleListSkeleton theme={theme} />
+        <BundleListSkeleton
+          theme={theme}
+          accessibilityLabel={t(locale, 'topUp.bundlesLoading')}
+        />
       ) : (
         bundles.map(renderBundle)
       )}
 
       {!bundlesLoading && !bundlesError && bundles.length === 0 ? (
-        <Text style={styles.error}>No active bundles for this app.</Text>
+        <Text style={styles.error}>{t(locale, 'topUp.noBundles')}</Text>
       ) : null}
 
       <Pressable
@@ -228,7 +237,9 @@ export function OfferStep() {
         disabled={!selectedBundle}
       >
         <Text style={styles.ctaText}>
-          Continue with {selectedBundle?.label ?? 'bundle'}
+          {t(locale, 'common.continueWith', {
+            label: selectedBundle?.label ?? t(locale, 'common.bundle'),
+          })}
         </Text>
         <Icon name="arrow-forward" size={20} color={colors.onPrimaryContainer} />
       </Pressable>

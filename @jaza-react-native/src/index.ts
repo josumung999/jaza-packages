@@ -1,7 +1,7 @@
 export { JazaProvider } from './provider/JazaProvider.js';
 export type { JazaProviderProps } from './provider/JazaProvider.js';
 export { useJaza } from './provider/JazaContext.js';
-export type { JazaContextValue, TopUpStep, ResultPhase } from './provider/JazaContext.js';
+export type { JazaContextValue, TopUpStep, ResultPhase, TopUpSource } from './provider/JazaContext.js';
 
 export { JazaBalance, JazaBalanceWidget } from './widgets/JazaBalance.js';
 export type {
@@ -47,7 +47,10 @@ export type {
 } from './api/types.js';
 
 export type { JazaTheme, ThemePreference } from './theme/tokens.js';
-export { lightTheme, darkTheme } from './theme/tokens.js';
+export { lightTheme, darkTheme, resolveTheme } from './theme/tokens.js';
+
+export type { JazaLocale, MessageDictionary, MessageParams } from './i18n/index.js';
+export { JAZA_LOCALES, t } from './i18n/index.js';
 
 export { DEFAULT_API_BASE_URL, VERSION } from './version.js';
 

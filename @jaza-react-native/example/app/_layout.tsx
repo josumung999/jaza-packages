@@ -1,18 +1,33 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, type ReactNode } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, useColorScheme, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { JazaProvider, type InitResult } from '@jazadev/react-native';
+import {
+  darkTheme,
+  JazaProvider,
+  lightTheme,
+  type InitResult,
+} from '@jazadev/react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { AppPrefsProvider, useAppPrefs } from '@/lib/app-prefs';
 import { apiFetch } from '@/lib/api';
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading, signOut } = useAuth();
+  const { themePreference, locale } = useAppPrefs();
   const pathname = usePathname();
   const router = useRouter();
+  const systemScheme = useColorScheme();
+  const resolvedMode =
+    themePreference === 'system'
+      ? systemScheme === 'dark'
+        ? 'dark'
+        : 'light'
+      : themePreference;
+  const chrome = resolvedMode === 'dark' ? darkTheme : lightTheme;
 
   useEffect(() => {
     if (loading) return;
@@ -48,8 +63,15 @@ function AuthGate({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: chrome.colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={chrome.colors.primary} />
       </View>
     );
   }
@@ -64,7 +86,8 @@ function AuthGate({ children }: { children: ReactNode }) {
       apiBaseUrl={process.env.EXPO_PUBLIC_JAZA_API_BASE_URL}
       getSession={getSession}
       onAuthError={onAuthError}
-      theme="dark"
+      theme={themePreference}
+      locale={locale}
     >
       {children}
     </JazaProvider>
@@ -74,16 +97,18 @@ function AuthGate({ children }: { children: ReactNode }) {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <AuthGate>
-          <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="home" />
-            <Stack.Screen name="transactions" />
-          </Stack>
-        </AuthGate>
-      </AuthProvider>
+      <AppPrefsProvider>
+        <AuthProvider>
+          <AuthGate>
+            <StatusBar style="auto" />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="home" />
+              <Stack.Screen name="transactions" />
+            </Stack>
+          </AuthGate>
+        </AuthProvider>
+      </AppPrefsProvider>
     </GestureHandlerRootView>
   );
 }

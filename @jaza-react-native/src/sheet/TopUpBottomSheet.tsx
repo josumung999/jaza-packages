@@ -8,6 +8,7 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/Icon.js';
+import { t } from '../i18n/t.js';
 import { useJaza } from '../provider/JazaContext.js';
 import { OfferStep } from './steps/OfferStep.js';
 import { PaymentStep } from './steps/PaymentStep.js';
@@ -18,7 +19,7 @@ import { ResultStep } from './steps/ResultStep.js';
  * react-native-screens native stacks (BottomSheetModal.present() often no-ops).
  */
 export function TopUpBottomSheet() {
-  const { theme, sheetOpen, step, resultPhase, closeTopUp } = useJaza();
+  const { theme, sheetOpen, step, resultPhase, closeTopUp, locale } = useJaza();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
   const ref = useRef<BottomSheet>(null);
@@ -125,7 +126,7 @@ export function TopUpBottomSheet() {
               onPress={requestClose}
               disabled={!canDismiss}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t(locale, 'common.close')}
               accessibilityState={{ disabled: !canDismiss }}
             >
               <Icon

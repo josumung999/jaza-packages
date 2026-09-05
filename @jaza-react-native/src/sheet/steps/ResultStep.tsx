@@ -8,12 +8,14 @@ import {
 } from 'react-native';
 import { Icon } from '../../components/Icon.js';
 import { ProcessingSpinner } from '../../components/ProcessingSpinner.js';
+import { t } from '../../i18n/t.js';
 import { useJaza } from '../../provider/JazaContext.js';
 import { formatCredits } from '../../utils/helpers.js';
 
 export function ResultStep() {
   const {
     theme,
+    locale,
     resultPhase,
     selectedBundle,
     deposit,
@@ -111,9 +113,9 @@ export function ResultStep() {
           <ProcessingSpinner theme={theme} size={64} />
         </View>
         <Text style={[styles.title, styles.titlePulse]}>
-          Processing payment...
+          {t(locale, 'result.processing')}
         </Text>
-        <Text style={styles.subtitle}>Please authorize on your device</Text>
+        <Text style={styles.subtitle}>{t(locale, 'result.authorize')}</Text>
       </View>
     );
   }
@@ -124,15 +126,15 @@ export function ResultStep() {
         <View style={styles.failIcon}>
           <Icon name="error-outline" size={48} color={colors.error} />
         </View>
-        <Text style={styles.title}>Payment failed</Text>
+        <Text style={styles.title}>{t(locale, 'result.failed')}</Text>
         <Text style={styles.subtitle}>
-          {failureReason ?? depositError ?? 'Something went wrong'}
+          {failureReason ?? depositError ?? t(locale, 'result.genericError')}
         </Text>
         <Pressable style={styles.retryBtn} onPress={retryPayment}>
-          <Text style={styles.retryText}>Try again</Text>
+          <Text style={styles.retryText}>{t(locale, 'common.tryAgain')}</Text>
         </Pressable>
         <Pressable style={styles.doneBtn} onPress={closeTopUp}>
-          <Text style={styles.doneText}>Dismiss</Text>
+          <Text style={styles.doneText}>{t(locale, 'common.dismiss')}</Text>
         </Pressable>
       </View>
     );
@@ -145,12 +147,14 @@ export function ResultStep() {
       <Animated.View style={[styles.successIcon, { transform: [{ scale }] }]}>
         <Icon name="check-circle" size={48} color={colors.success} />
       </Animated.View>
-      <Text style={styles.title}>Top-up Successful</Text>
+      <Text style={styles.title}>{t(locale, 'result.success')}</Text>
       <Text style={styles.subtitle}>
-        {formatCredits(credits)} credits have been added to your balance.
+        {t(locale, 'result.creditsAdded', {
+          credits: formatCredits(credits),
+        })}
       </Text>
       <Pressable style={styles.doneBtn} onPress={closeTopUp}>
-        <Text style={styles.doneText}>Done</Text>
+        <Text style={styles.doneText}>{t(locale, 'common.done')}</Text>
       </Pressable>
     </View>
   );

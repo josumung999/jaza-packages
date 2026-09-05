@@ -12,6 +12,7 @@ import type {
 } from '../api/types.js';
 import type { EnrichedCountry } from '../utils/helpers.js';
 import type { JazaTheme, ThemePreference } from '../theme/tokens.js';
+import type { JazaLocale } from '../i18n/types.js';
 
 export type TopUpStep = 'offer' | 'payment' | 'processing';
 
@@ -23,6 +24,8 @@ export type TopUpSource = 'topup' | 'paywall';
 export type JazaContextValue = {
   theme: JazaTheme;
   themePreference: ThemePreference;
+  locale: JazaLocale;
+  setLocale: (locale: JazaLocale) => void;
   publishableKey: string;
   client: PublicClient;
   /** Session handshake status (init / authEndpoint) */

@@ -1,11 +1,41 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { JazaLedger } from '@jazadev/react-native';
+import { JazaLedger, useJaza } from '@jazadev/react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { theme } = useJaza();
+  const { colors } = theme;
+
+  const styles = StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingHorizontal: 20,
+    },
+    header: {
+      marginBottom: 8,
+      gap: 8,
+    },
+    back: {
+      alignSelf: 'flex-start',
+      paddingVertical: 8,
+    },
+    backText: {
+      color: colors.onSurfaceVariant,
+      fontWeight: '500',
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: colors.onSurface,
+    },
+    list: {
+      flex: 1,
+    },
+  });
 
   return (
     <View
@@ -24,31 +54,3 @@ export default function TransactionsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-    paddingHorizontal: 20,
-  },
-  header: {
-    marginBottom: 8,
-    gap: 8,
-  },
-  back: {
-    alignSelf: 'flex-start',
-    paddingVertical: 8,
-  },
-  backText: {
-    color: '#94a3b8',
-    fontWeight: '500',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#f8fafc',
-  },
-  list: {
-    flex: 1,
-  },
-});

@@ -5,10 +5,15 @@ import type { JazaTheme } from '../theme/tokens.js';
 type BalanceCardSkeletonProps = {
   theme: JazaTheme;
   style?: ViewStyle;
+  accessibilityLabel?: string;
 };
 
 /** Full balance card placeholder while credits load. */
-export function BalanceCardSkeleton({ theme, style }: BalanceCardSkeletonProps) {
+export function BalanceCardSkeleton({
+  theme,
+  style,
+  accessibilityLabel = 'Loading balance',
+}: BalanceCardSkeletonProps) {
   const { colors, spacing, radius } = theme;
 
   const styles = StyleSheet.create({
@@ -40,7 +45,7 @@ export function BalanceCardSkeleton({ theme, style }: BalanceCardSkeletonProps) 
     <View
       style={[styles.card, style]}
       accessibilityRole="progressbar"
-      accessibilityLabel="Loading balance"
+      accessibilityLabel={accessibilityLabel}
     >
       <Skeleton
         theme={theme}

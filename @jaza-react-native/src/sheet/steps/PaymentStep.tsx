@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Icon } from '../../components/Icon.js';
 import { PhoneDigitInput } from '../../components/PhoneDigitInput.js';
+import { t } from '../../i18n/t.js';
 import { useJaza } from '../../provider/JazaContext.js';
 import { formatCurrencyAmount, formatUsd } from '../../utils/helpers.js';
 import { CountryPickerSheet } from '../CountryPickerSheet.js';
@@ -16,6 +17,7 @@ import { CurrencyPickerSheet } from '../CurrencyPickerSheet.js';
 export function PaymentStep() {
   const {
     theme,
+    locale,
     balance,
     selectedBundle,
     selectedCountry,
@@ -51,12 +53,14 @@ export function PaymentStep() {
     : null;
 
   const buyLabel = quote
-    ? `Buy ${formattedQuote}`
+    ? t(locale, 'topUp.buyAmount', { amount: formattedQuote! })
     : quoteLoading
-      ? 'Loading…'
+      ? t(locale, 'common.loading')
       : selectedBundle
-        ? `Buy ${formatUsd(selectedBundle.priceUsd)}`
-        : 'Buy';
+        ? t(locale, 'topUp.buyAmount', {
+            amount: formatUsd(selectedBundle.priceUsd),
+          })
+        : t(locale, 'topUp.buy');
 
   const styles = StyleSheet.create({
     header: {
@@ -186,7 +190,7 @@ export function PaymentStep() {
             <Icon name="arrow-back" size={22} color={colors.onSurfaceVariant} />
           </Pressable>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {selectedBundle?.label ?? 'Top-up Balance'}
+            {selectedBundle?.label ?? t(locale, 'topUp.balanceFallback')}
           </Text>
         </View>
         {balance !== null ? (
@@ -201,6 +205,9 @@ export function PaymentStep() {
         theme={theme}
         value={phoneNational}
         onChangeText={setPhoneNational}
+        countryLabel={t(locale, 'payment.country')}
+        phoneLabel={t(locale, 'payment.phone')}
+        phonePlaceholder={t(locale, 'payment.phonePlaceholder')}
         dialPressable={
           <Pressable
             style={styles.dialBtn}

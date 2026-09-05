@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { BalanceCardSkeleton } from '../components/BalanceCardSkeleton.js';
 import { Icon } from '../components/Icon.js';
+import { t } from '../i18n/t.js';
 import { useJaza } from '../provider/JazaContext.js';
 import { formatCredits } from '../utils/helpers.js';
 
@@ -23,8 +24,14 @@ export type JazaBalanceProps = {
 };
 
 export function JazaBalance({ style, children }: JazaBalanceProps) {
-  const { theme, balanceCredits, balanceLoading, balanceError, refreshBalance } =
-    useJaza();
+  const {
+    theme,
+    locale,
+    balanceCredits,
+    balanceLoading,
+    balanceError,
+    refreshBalance,
+  } = useJaza();
   const { colors, spacing, radius } = theme;
 
   useEffect(() => {
@@ -73,12 +80,12 @@ export function JazaBalance({ style, children }: JazaBalanceProps) {
   });
 
   if (balanceLoading && balanceCredits === null) {
-    return <BalanceCardSkeleton theme={theme} style={style} />;
+    return <BalanceCardSkeleton theme={theme} style={style} accessibilityLabel={t(locale, 'balance.loading')} />;
   }
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>Current Balance</Text>
+      <Text style={styles.label}>{t(locale, 'balance.current')}</Text>
       <View style={styles.row}>
         <Icon name="bolt" size={28} color={colors.primary} />
         <Text style={styles.value}>

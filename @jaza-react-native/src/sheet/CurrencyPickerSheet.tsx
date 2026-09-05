@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useJaza } from '../provider/JazaContext.js';
+import { t } from '../i18n/t.js';
 import { createSelectableRowStyles } from '../theme/listStyles.js';
 
 export type CurrencyOption = {
@@ -30,7 +31,7 @@ export function CurrencyPickerSheet({
   onSelect,
   onClose,
 }: CurrencyPickerSheetProps) {
-  const { theme } = useJaza();
+  const { theme, locale } = useJaza();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
   const rowStyles = createSelectableRowStyles(theme);
@@ -76,7 +77,7 @@ export function CurrencyPickerSheet({
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <View style={styles.handle} />
-          <Text style={styles.title}>Select currency</Text>
+          <Text style={styles.title}>{t(locale, 'payment.selectCurrency')}</Text>
           <FlatList
             data={currencies}
             keyExtractor={(item) => item.code}

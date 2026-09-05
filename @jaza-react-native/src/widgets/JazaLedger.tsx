@@ -11,6 +11,7 @@ import {
 import { FlashList } from '@shopify/flash-list';
 import { Icon } from '../components/Icon.js';
 import { LedgerListSkeleton } from '../components/LedgerListSkeleton.js';
+import { t } from '../i18n/t.js';
 import { useJaza } from '../provider/JazaContext.js';
 import { formatCredits } from '../utils/helpers.js';
 import {
@@ -46,10 +47,10 @@ function DefaultLedgerItem({
 
   const badgeTone =
     status === 'failure'
-      ? { fg: colors.error, bg: 'rgba(255, 180, 171, 0.18)' }
+      ? { fg: colors.error, bg: colors.errorContainer }
       : status === 'pending'
-        ? { fg: '#e8b931', bg: 'rgba(232, 185, 49, 0.18)' }
-        : { fg: colors.primary, bg: 'rgba(87, 241, 219, 0.18)' };
+        ? { fg: colors.warning, bg: colors.warningContainer }
+        : { fg: colors.primary, bg: colors.primaryMuted };
 
   const styles = StyleSheet.create({
     row: {
@@ -174,7 +175,7 @@ function LedgerPlaceholder({
   message: string;
   onRetry?: () => void;
 }) {
-  const { theme } = useJaza();
+  const { theme, locale } = useJaza();
   const { colors, spacing, radius } = theme;
 
   const styles = StyleSheet.create({
@@ -230,7 +231,7 @@ function LedgerPlaceholder({
       <Text style={styles.message}>{message}</Text>
       {onRetry ? (
         <Pressable style={styles.retry} onPress={onRetry}>
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t(locale, 'common.retry')}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -243,7 +244,7 @@ export function JazaLedger({
   style,
   ItemComponent = DefaultLedgerItem,
 }: JazaLedgerProps) {
-  const { theme, client, status, ledgerRevision } = useJaza();
+  const { theme, client, status, ledgerRevision, locale } = useJaza();
   const { colors, spacing } = theme;
 
   const [items, setItems] = useState<JazaLedgerItemProps[]>([]);
@@ -265,12 +266,13 @@ export function JazaLedger({
       const mapped = page.items.map((entry) =>
         toLedgerItemProps(entry, {
           subtitleStyle: mode === 'preview' ? 'date-time' : 'time',
+          locale,
         }),
       );
       setItems((prev) => (opts.replace ? mapped : [...prev, ...mapped]));
       setNextCursor(page.nextCursor ?? null);
     },
-    [client, mode, pageSize],
+    [client, locale, mode, pageSize],
   );
 
   const loadInitial = useCallback(async () => {
@@ -284,11 +286,11 @@ export function JazaLedger({
     try {
       await fetchPage({ replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load ledger');
+      setError(err instanceof Error ? err.message : t(locale, 'ledger.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [fetchPage, status]);
+  }, [fetchPage, locale, status]);
 
   useEffect(() => {
     void loadInitial();
@@ -300,11 +302,13 @@ export function JazaLedger({
     try {
       await fetchPage({ replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not refresh ledger');
+      setError(
+        err instanceof Error ? err.message : t(locale, 'ledger.refreshError'),
+      );
     } finally {
       setRefreshing(false);
     }
-  }, [fetchPage]);
+  }, [fetchPage, locale]);
 
   const onEndReached = useCallback(async () => {
     if (mode !== 'scroll' || !nextCursor || loadingMore || loading) return;
@@ -312,11 +316,13 @@ export function JazaLedger({
     try {
       await fetchPage({ cursor: nextCursor, replace: false });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load more');
+      setError(
+        err instanceof Error ? err.message : t(locale, 'ledger.loadMoreError'),
+      );
     } finally {
       setLoadingMore(false);
     }
-  }, [fetchPage, loading, loadingMore, mode, nextCursor]);
+  }, [fetchPage, loading, loadingMore, locale, mode, nextCursor]);
 
   const displayItems = useMemo(
     () => (mode === 'preview' ? items.slice(0, limit) : items),
@@ -324,8 +330,8 @@ export function JazaLedger({
   );
 
   const sections = useMemo(
-    () => groupLedgerIntoSections(displayItems),
-    [displayItems],
+    () => groupLedgerIntoSections(displayItems, locale),
+    [displayItems, locale],
   );
 
   const showDateLabels = mode === 'scroll';
@@ -355,6 +361,7 @@ export function JazaLedger({
           theme={theme}
           mode={mode}
           rows={mode === 'preview' ? Math.min(limit, 3) : 5}
+          accessibilityLabel={t(locale, 'ledger.loading')}
         />
       </View>
     );
@@ -364,7 +371,7 @@ export function JazaLedger({
     return (
       <View style={styles.root}>
         <LedgerPlaceholder
-          title="Couldn’t load transactions"
+          title={t(locale, 'ledger.errorTitle')}
           message={error}
           onRetry={() => void loadInitial()}
         />
@@ -376,8 +383,8 @@ export function JazaLedger({
     return (
       <View style={styles.root}>
         <LedgerPlaceholder
-          title="No transactions yet"
-          message="Top-ups and purchases will show up here."
+          title={t(locale, 'ledger.emptyTitle')}
+          message={t(locale, 'ledger.emptyMessage')}
         />
       </View>
     );

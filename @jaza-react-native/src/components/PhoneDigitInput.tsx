@@ -12,6 +12,9 @@ export type PhoneDigitInputProps = {
   onChangeText: (value: string) => void;
   dialPressable: ReactNode;
   trailing?: ReactNode;
+  countryLabel?: string;
+  phoneLabel?: string;
+  phonePlaceholder?: string;
 };
 
 /**
@@ -23,6 +26,9 @@ export function PhoneDigitInput({
   onChangeText,
   dialPressable,
   trailing,
+  countryLabel = 'Country',
+  phoneLabel = 'Phone Number',
+  phonePlaceholder = 'Enter number',
 }: PhoneDigitInputProps) {
   const { colors, spacing, radius } = theme;
   const inputRef = useRef<{ focus: () => void } | null>(null);
@@ -79,7 +85,7 @@ export function PhoneDigitInput({
   return (
     <View style={styles.row}>
       <View style={[styles.field, styles.countryField]}>
-        <Text style={styles.label}>Country</Text>
+        <Text style={styles.label}>{countryLabel}</Text>
         {dialPressable}
       </View>
       <Pressable
@@ -91,7 +97,7 @@ export function PhoneDigitInput({
         onPress={() => inputRef.current?.focus()}
       >
         <View style={{ flex: 1 }}>
-          <Text style={styles.label}>Phone Number</Text>
+          <Text style={styles.label}>{phoneLabel}</Text>
           <BottomSheetTextInput
             ref={inputRef as never}
             style={styles.phoneInput}
@@ -105,7 +111,7 @@ export function PhoneDigitInput({
             autoComplete="tel"
             textContentType="telephoneNumber"
             maxLength={MAX_DIGITS}
-            placeholder="Enter number"
+            placeholder={phonePlaceholder}
             placeholderTextColor={colors.onSurfaceVariant}
           />
         </View>

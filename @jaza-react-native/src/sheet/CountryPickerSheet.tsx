@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useJaza } from '../provider/JazaContext.js';
+import { t } from '../i18n/t.js';
 import { createSelectableRowStyles } from '../theme/listStyles.js';
 
 export type CountryPickerSheetProps = {
@@ -23,7 +24,8 @@ export function CountryPickerSheet({
   visible,
   onClose,
 }: CountryPickerSheetProps) {
-  const { theme, countries, selectedCountry, setSelectedCountry } = useJaza();
+  const { theme, locale, countries, selectedCountry, setSelectedCountry } =
+    useJaza();
   const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
@@ -123,7 +125,7 @@ export function CountryPickerSheet({
           <View style={styles.handle} />
           <TextInput
             style={styles.search}
-            placeholder="Search country"
+            placeholder={t(locale, 'payment.searchCountry')}
             placeholderTextColor={colors.onSurfaceVariant}
             value={query}
             onChangeText={setQuery}
@@ -166,7 +168,7 @@ export function CountryPickerSheet({
               );
             }}
             ListEmptyComponent={
-              <Text style={styles.empty}>No countries match</Text>
+              <Text style={styles.empty}>{t(locale, 'payment.noCountries')}</Text>
             }
           />
         </View>

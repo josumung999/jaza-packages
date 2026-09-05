@@ -8,6 +8,7 @@ type LedgerListSkeletonProps = {
   mode?: 'preview' | 'scroll';
   rows?: number;
   style?: ViewStyle;
+  accessibilityLabel?: string;
 };
 
 function LedgerRowSkeleton({ theme }: { theme: JazaTheme }) {
@@ -40,6 +41,7 @@ export function LedgerListSkeleton({
   mode = 'preview',
   rows,
   style,
+  accessibilityLabel = 'Loading transactions',
 }: LedgerListSkeletonProps) {
   const { colors, spacing, radius } = theme;
   const count = rows ?? (mode === 'preview' ? 3 : 5);
@@ -68,7 +70,7 @@ export function LedgerListSkeleton({
       <View
         style={[styles.root, style]}
         accessibilityRole="progressbar"
-        accessibilityLabel="Loading transactions"
+        accessibilityLabel={accessibilityLabel}
       >
         <View style={styles.card}>
           {Array.from({ length: count }, (_, i) => (
@@ -86,7 +88,7 @@ export function LedgerListSkeleton({
     <View
       style={[styles.root, style]}
       accessibilityRole="progressbar"
-      accessibilityLabel="Loading transactions"
+      accessibilityLabel={accessibilityLabel}
     >
       <Skeleton theme={theme} width="36%" height={14} borderRadius={6} style={styles.date} />
       <View style={styles.card}>
