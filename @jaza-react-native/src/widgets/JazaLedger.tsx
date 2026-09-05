@@ -9,6 +9,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { Icon } from '../components/Icon.js';
+import { LedgerListSkeleton } from '../components/LedgerListSkeleton.js';
 import { useJaza } from '../provider/JazaContext.js';
 import { formatCredits } from '../utils/helpers.js';
 import {
@@ -163,6 +165,78 @@ function LedgerSectionCard({
   );
 }
 
+function LedgerPlaceholder({
+  title,
+  message,
+  onRetry,
+}: {
+  title: string;
+  message: string;
+  onRetry?: () => void;
+}) {
+  const { theme } = useJaza();
+  const { colors, spacing, radius } = theme;
+
+  const styles = StyleSheet.create({
+    card: {
+      backgroundColor: colors.surfaceContainer,
+      borderRadius: radius.xl,
+      paddingVertical: spacing.xl,
+      paddingHorizontal: spacing.lg,
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    iconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.full,
+      backgroundColor: `${colors.primary}18`,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.xs,
+    },
+    title: {
+      color: colors.onSurface,
+      fontSize: 16,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    message: {
+      color: colors.onSurfaceVariant,
+      fontSize: 14,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    retry: {
+      marginTop: spacing.sm,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      borderRadius: radius.full,
+      backgroundColor: colors.surfaceContainerHigh,
+    },
+    retryText: {
+      color: colors.primary,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+  });
+
+  return (
+    <View style={styles.card} accessibilityRole="summary">
+      <View style={styles.iconWrap}>
+        <Icon name="bolt" size={28} color={colors.primary} />
+      </View>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.message}>{message}</Text>
+      {onRetry ? (
+        <Pressable style={styles.retry} onPress={onRetry}>
+          <Text style={styles.retryText}>Retry</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 export function JazaLedger({
   mode = 'preview',
   limit = 5,
@@ -174,7 +248,8 @@ export function JazaLedger({
 
   const [items, setItems] = useState<JazaLedgerItemProps[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  // Start true so the first paint is skeleton, not the empty placeholder.
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -199,7 +274,11 @@ export function JazaLedger({
   );
 
   const loadInitial = useCallback(async () => {
-    if (status !== 'AUTHENTICATED') return;
+    if (status !== 'AUTHENTICATED') {
+      // Stay in loading until auth is ready — avoid empty flash.
+      setLoading(true);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -249,7 +328,6 @@ export function JazaLedger({
     [displayItems],
   );
 
-  /** Preview: single shaded card (no date headers). Scroll: date groups each in a card. */
   const showDateLabels = mode === 'scroll';
 
   const previewSections = useMemo((): LedgerSection[] => {
@@ -267,33 +345,17 @@ export function JazaLedger({
 
   const styles = StyleSheet.create({
     root: { flex: mode === 'scroll' ? 1 : undefined, ...style },
-    empty: {
-      color: colors.onSurfaceVariant,
-      fontSize: 14,
-      paddingVertical: spacing.lg,
-      textAlign: 'center',
-    },
-    error: {
-      color: colors.error,
-      fontSize: 13,
-      marginBottom: spacing.sm,
-    },
-    retry: {
-      alignSelf: 'center',
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.md,
-    },
-    retryText: {
-      color: colors.primary,
-      fontWeight: '600',
-    },
     footer: { paddingVertical: spacing.md },
   });
 
   if (loading && items.length === 0) {
     return (
-      <View style={[styles.root, { paddingVertical: spacing.lg }]}>
-        <ActivityIndicator color={colors.primary} />
+      <View style={styles.root}>
+        <LedgerListSkeleton
+          theme={theme}
+          mode={mode}
+          rows={mode === 'preview' ? Math.min(limit, 3) : 5}
+        />
       </View>
     );
   }
@@ -301,10 +363,11 @@ export function JazaLedger({
   if (error && items.length === 0) {
     return (
       <View style={styles.root}>
-        <Text style={styles.error}>{error}</Text>
-        <Pressable style={styles.retry} onPress={() => void loadInitial()}>
-          <Text style={styles.retryText}>Retry</Text>
-        </Pressable>
+        <LedgerPlaceholder
+          title="Couldn’t load transactions"
+          message={error}
+          onRetry={() => void loadInitial()}
+        />
       </View>
     );
   }
@@ -312,7 +375,10 @@ export function JazaLedger({
   if (displayItems.length === 0) {
     return (
       <View style={styles.root}>
-        <Text style={styles.empty}>No transactions yet</Text>
+        <LedgerPlaceholder
+          title="No transactions yet"
+          message="Top-ups and purchases will show up here."
+        />
       </View>
     );
   }
@@ -320,7 +386,6 @@ export function JazaLedger({
   if (mode === 'preview') {
     return (
       <View style={styles.root}>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
         {listSections.map((section) => (
           <LedgerSectionCard
             key={section.key}
@@ -335,10 +400,10 @@ export function JazaLedger({
 
   return (
     <View style={styles.root}>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlashList
         data={listSections}
         keyExtractor={(section) => section.key}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item: section }) => (
           <LedgerSectionCard
             section={section}

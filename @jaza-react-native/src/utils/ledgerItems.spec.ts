@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   groupLedgerIntoSections,
-  ledgerDetailLabel,
+  ledgerTitleLabel,
   toLedgerItemProps,
 } from './ledgerItems.js';
 
-describe('ledgerDetailLabel', () => {
+describe('ledgerTitleLabel', () => {
   it('uses provider for top-ups and feature for consumption', () => {
     expect(
-      ledgerDetailLabel({
+      ledgerTitleLabel({
         id: '1',
         type: 'TOP_UP',
         credits: 50,
@@ -17,7 +17,7 @@ describe('ledgerDetailLabel', () => {
       }),
     ).toBe('M-Pesa');
     expect(
-      ledgerDetailLabel({
+      ledgerTitleLabel({
         id: '2',
         type: 'CONSUMPTION',
         credits: 5,
@@ -28,30 +28,30 @@ describe('ledgerDetailLabel', () => {
     ).toBe('Send message');
   });
 
-  it('truncates provider names longer than 15 characters', () => {
+  it('truncates titles longer than 20 characters', () => {
     expect(
-      ledgerDetailLabel({
+      ledgerTitleLabel({
         id: '3',
         type: 'TOP_UP',
         credits: 50,
         provider: 'Very Long Mobile Money Provider Name',
         createdAt: '2026-09-05T12:00:00.000Z',
       }),
-    ).toBe('Very Long Mobi…');
+    ).toBe('Very Long Mobile Mo…');
     expect(
-      ledgerDetailLabel({
+      ledgerTitleLabel({
         id: '3',
         type: 'TOP_UP',
         credits: 50,
         provider: 'Very Long Mobile Money Provider Name',
         createdAt: '2026-09-05T12:00:00.000Z',
       }).length,
-    ).toBeLessThanOrEqual(15);
+    ).toBeLessThanOrEqual(20);
   });
 });
 
 describe('toLedgerItemProps', () => {
-  it('maps top-up with provider subtitle (time only by default)', () => {
+  it('maps top-up with provider title and Top-up subtitle', () => {
     const props = toLedgerItemProps({
       id: '1',
       type: 'TOP_UP',
@@ -60,9 +60,9 @@ describe('toLedgerItemProps', () => {
       createdAt: '2026-09-05T12:00:00.000Z',
     });
     expect(props.direction).toBe('credit');
-    expect(props.title).toBe('Top-up');
+    expect(props.title).toBe('M-Pesa');
     expect(props.status).toBe('success');
-    expect(props.subtitle).toMatch(/^M-Pesa · /);
+    expect(props.subtitle).toMatch(/^Top-up · /);
     expect(props.subtitle).not.toMatch(/Sep/);
   });
 
@@ -77,11 +77,12 @@ describe('toLedgerItemProps', () => {
       },
       { subtitleStyle: 'date-time' },
     );
-    expect(props.subtitle).toMatch(/^M-Pesa · /);
+    expect(props.title).toBe('M-Pesa');
+    expect(props.subtitle).toMatch(/^Top-up · /);
     expect(props.subtitle).toMatch(/Sep/i);
   });
 
-  it('maps consumption with feature detail', () => {
+  it('maps consumption with feature title and Purchase subtitle', () => {
     const props = toLedgerItemProps({
       id: '2',
       type: 'CONSUMPTION',
@@ -91,8 +92,8 @@ describe('toLedgerItemProps', () => {
       createdAt: '2026-09-05T12:00:00.000Z',
     });
     expect(props.direction).toBe('debit');
-    expect(props.title).toBe('Purchase');
-    expect(props.subtitle).toMatch(/^Send message · /);
+    expect(props.title).toBe('Send message');
+    expect(props.subtitle).toMatch(/^Purchase · /);
   });
 });
 

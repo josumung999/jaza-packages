@@ -22,13 +22,21 @@ export type LedgerSection = {
 
 export type LedgerSubtitleStyle = 'time' | 'date-time';
 
-function titleForType(type: string, description?: string): string {
-  // Feature / provider belong in the subtitle, not the title.
-  if (type === 'CONSUMPTION') return 'Purchase';
-  if (description?.trim()) return description.trim();
+const TITLE_LABEL_MAX = 20;
+
+function truncateLabel(label: string, max: number): string {
+  const trimmed = label.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, Math.max(0, max - 1))}…`;
+}
+
+/** Kind shown in the subtitle (Top-up / Purchase). */
+export function ledgerKindLabel(type: string): string {
   switch (type) {
     case 'TOP_UP':
       return 'Top-up';
+    case 'CONSUMPTION':
+      return 'Purchase';
     case 'REFUND':
       return 'Refund';
     default:
@@ -36,16 +44,11 @@ function titleForType(type: string, description?: string): string {
   }
 }
 
-const DETAIL_LABEL_MAX = 15;
-
-function truncateDetailLabel(label: string, max = DETAIL_LABEL_MAX): string {
-  const trimmed = label.trim();
-  if (trimmed.length <= max) return trimmed;
-  return `${trimmed.slice(0, Math.max(0, max - 1))}…`;
-}
-
-/** Leading subtitle segment: provider for top-ups, feature for consumption. */
-export function ledgerDetailLabel(entry: InitLedgerItem): string {
+/**
+ * Primary title: provider (top-up) or feature (consumption).
+ * Capped at 20 characters so the amount stays visible.
+ */
+export function ledgerTitleLabel(entry: InitLedgerItem): string {
   let label: string;
   if (entry.type === 'TOP_UP') {
     label = entry.provider?.trim() || 'Mobile Money';
@@ -56,11 +59,16 @@ export function ledgerDetailLabel(entry: InitLedgerItem): string {
       entry.description?.trim() ||
       'Purchase';
   } else if (entry.type === 'REFUND') {
-    label = 'Refund';
+    label = entry.description?.trim() || 'Refund';
   } else {
-    label = entry.type;
+    label = entry.description?.trim() || entry.type;
   }
-  return truncateDetailLabel(label);
+  return truncateLabel(label, TITLE_LABEL_MAX);
+}
+
+/** @deprecated Prefer ledgerTitleLabel */
+export function ledgerDetailLabel(entry: InitLedgerItem): string {
+  return ledgerTitleLabel(entry);
 }
 
 function directionForType(type: string): 'credit' | 'debit' {
@@ -78,7 +86,7 @@ export function formatLedgerTime(iso: string): string {
   }
 }
 
-/** e.g. `05 Sep · 15:04` for preview rows without a date header */
+/** e.g. `05 Sep, 15:04` for preview rows without a date header */
 export function formatLedgerDateTime(iso: string): string {
   try {
     const d = new Date(iso);
@@ -127,7 +135,7 @@ export function toLedgerItemProps(
   entry: InitLedgerItem,
   opts?: { subtitleStyle?: LedgerSubtitleStyle },
 ): JazaLedgerItemProps {
-  const detail = ledgerDetailLabel(entry);
+  const kind = ledgerKindLabel(entry.type);
   const when =
     opts?.subtitleStyle === 'date-time'
       ? formatLedgerDateTime(entry.createdAt)
@@ -135,8 +143,8 @@ export function toLedgerItemProps(
   return {
     id: entry.id,
     type: entry.type,
-    title: titleForType(entry.type, entry.description),
-    subtitle: `${detail} · ${when}`,
+    title: ledgerTitleLabel(entry),
+    subtitle: `${kind} · ${when}`,
     credits: entry.credits,
     direction: directionForType(entry.type),
     status: 'success',
