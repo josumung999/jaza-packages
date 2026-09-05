@@ -68,7 +68,7 @@ export function PhoneDigitInput({
     phoneInput: {
       flex: 1,
       color: colors.onSurface,
-      fontSize: 18,
+      fontSize: 18 * 1.15,
       fontWeight: '600',
       padding: 0,
       margin: 0,

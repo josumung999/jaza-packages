@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -7,6 +7,7 @@ import BottomSheet, {
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon } from '../components/Icon.js';
 import { useJaza } from '../provider/JazaContext.js';
 import { OfferStep } from './steps/OfferStep.js';
 import { PaymentStep } from './steps/PaymentStep.js';
@@ -17,11 +18,33 @@ import { ResultStep } from './steps/ResultStep.js';
  * react-native-screens native stacks (BottomSheetModal.present() often no-ops).
  */
 export function TopUpBottomSheet() {
-  const { theme, sheetOpen, step, closeTopUp } = useJaza();
-  const { colors, spacing } = theme;
+  const { theme, sheetOpen, step, resultPhase, closeTopUp } = useJaza();
+  const { colors, spacing, radius } = theme;
   const insets = useSafeAreaInsets();
   const ref = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['92%'], []);
+
+  /** Bundle picker can expand; payment + polling stay under half the screen. */
+  const snapPoints = useMemo(() => {
+    if (step === 'offer') return ['55%', '92%'];
+    return ['48%'];
+  }, [step]);
+
+  const paymentInFlight =
+    step === 'processing' && resultPhase === 'loading';
+  const canDismiss = !paymentInFlight;
+
+  useEffect(() => {
+    if (!sheetOpen) return;
+    // Remount-friendly snap when step changes (offer expandable vs capped steps).
+    requestAnimationFrame(() => {
+      ref.current?.snapToIndex(0);
+    });
+  }, [step, sheetOpen]);
+
+  const requestClose = useCallback(() => {
+    if (!canDismiss) return;
+    closeTopUp();
+  }, [canDismiss, closeTopUp]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -30,7 +53,7 @@ export function TopUpBottomSheet() {
         disappearsOnIndex={-1}
         appearsOnIndex={0}
         opacity={0.6}
-        pressBehavior="close"
+        pressBehavior="none"
       />
     ),
     [],
@@ -47,7 +70,22 @@ export function TopUpBottomSheet() {
       backgroundColor: colors.surfaceContainerHighest,
       alignSelf: 'center',
       marginTop: spacing.sm,
-      marginBottom: spacing.md,
+      marginBottom: spacing.sm,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      paddingHorizontal: spacing.gutter,
+      marginBottom: spacing.sm,
+    },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: colors.surfaceContainerHigh,
+      alignItems: 'center',
+      justifyContent: 'center',
+      opacity: canDismiss ? 1 : 0.35,
     },
     content: {
       paddingHorizontal: spacing.gutter,
@@ -61,16 +99,19 @@ export function TopUpBottomSheet() {
       transparent
       animationType="fade"
       statusBarTranslucent
-      onRequestClose={closeTopUp}
+      onRequestClose={requestClose}
     >
       {/* Android: GH root must wrap sheets inside RN Modal */}
       <GestureHandlerRootView style={styles.root}>
         <BottomSheet
+          key={step === 'offer' ? 'offer' : 'compact'}
           ref={ref}
           index={0}
           snapPoints={snapPoints}
-          enablePanDownToClose
-          onClose={closeTopUp}
+          enablePanDownToClose={false}
+          enableDynamicSizing={false}
+          enableOverDrag={step === 'offer'}
+          onClose={requestClose}
           backdropComponent={renderBackdrop}
           keyboardBehavior="interactive"
           keyboardBlurBehavior="restore"
@@ -78,6 +119,22 @@ export function TopUpBottomSheet() {
           backgroundStyle={{ backgroundColor: colors.surface }}
           handleComponent={() => <View style={styles.handle} />}
         >
+          <View style={styles.header}>
+            <Pressable
+              style={styles.closeBtn}
+              onPress={requestClose}
+              disabled={!canDismiss}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              accessibilityState={{ disabled: !canDismiss }}
+            >
+              <Icon
+                name="close"
+                size={20}
+                color={colors.onSurfaceVariant}
+              />
+            </Pressable>
+          </View>
           <BottomSheetScrollView
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.content}
