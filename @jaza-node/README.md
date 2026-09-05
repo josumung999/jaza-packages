@@ -60,6 +60,22 @@ console.log(wallet.balanceCredits);
 
 Errors throw `JazaError` with `statusCode`, `code`, and `raw`.
 
+## Webhooks
+
+Verify dashboard endpoint deliveries (raw body + `Jaza-Signature` header):
+
+```ts
+const event = jaza.webhooks.constructEvent(
+  rawBody, // string | Buffer — do not re-JSON.stringify
+  signatureHeader,
+  process.env.JAZA_WEBHOOK_SECRET!, // whsec_… from App Settings → Webhooks
+);
+
+// event.id, event.type, event.created, event.data
+```
+
+Event types include `jaza.webhook.topUp.completed`, `jaza.webhook.consumption.succeeded`, and related top-up / consumption variants. Also exported: `constructEvent`, `WEBHOOK_EVENT_TYPES`.
+
 ## License
 
 MIT
