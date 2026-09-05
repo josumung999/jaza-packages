@@ -25,10 +25,10 @@ describe('ledgerDetailLabel', () => {
         featureCode: 'SEND_MSG',
         createdAt: '2026-09-05T12:00:00.000Z',
       }),
-    ).toBe('Send mess…');
+    ).toBe('Send message');
   });
 
-  it('truncates provider names longer than 10 characters', () => {
+  it('truncates provider names longer than 15 characters', () => {
     expect(
       ledgerDetailLabel({
         id: '3',
@@ -37,7 +37,7 @@ describe('ledgerDetailLabel', () => {
         provider: 'Very Long Mobile Money Provider Name',
         createdAt: '2026-09-05T12:00:00.000Z',
       }),
-    ).toBe('Very Long…');
+    ).toBe('Very Long Mobi…');
     expect(
       ledgerDetailLabel({
         id: '3',
@@ -46,7 +46,7 @@ describe('ledgerDetailLabel', () => {
         provider: 'Very Long Mobile Money Provider Name',
         createdAt: '2026-09-05T12:00:00.000Z',
       }).length,
-    ).toBeLessThanOrEqual(10);
+    ).toBeLessThanOrEqual(15);
   });
 });
 
@@ -92,7 +92,7 @@ describe('toLedgerItemProps', () => {
     });
     expect(props.direction).toBe('debit');
     expect(props.title).toBe('Purchase');
-    expect(props.subtitle).toMatch(/^Send mess… · /);
+    expect(props.subtitle).toMatch(/^Send message · /);
   });
 });
 

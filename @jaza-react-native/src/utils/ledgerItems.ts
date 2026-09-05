@@ -36,7 +36,7 @@ function titleForType(type: string, description?: string): string {
   }
 }
 
-const DETAIL_LABEL_MAX = 10;
+const DETAIL_LABEL_MAX = 15;
 
 function truncateDetailLabel(label: string, max = DETAIL_LABEL_MAX): string {
   const trimmed = label.trim();
