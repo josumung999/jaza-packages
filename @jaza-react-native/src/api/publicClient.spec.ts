@@ -154,6 +154,7 @@ describe('PublicClient session auth', () => {
               id: 'le_1',
               type: 'TOP_UP',
               credits: 100,
+              provider: 'M-Pesa',
               createdAt: '2026-09-05T12:00:00.000Z',
             },
           ],

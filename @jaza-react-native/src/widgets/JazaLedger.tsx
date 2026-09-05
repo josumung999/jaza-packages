@@ -12,12 +12,13 @@ import { FlashList } from '@shopify/flash-list';
 import { useJaza } from '../provider/JazaContext.js';
 import { formatCredits } from '../utils/helpers.js';
 import {
-  groupLedgerIntoRows,
+  groupLedgerIntoSections,
   toLedgerItemProps,
   type JazaLedgerItemProps,
+  type LedgerSection,
 } from '../utils/ledgerItems.js';
 
-export type { JazaLedgerItemProps } from '../utils/ledgerItems.js';
+export type { JazaLedgerItemProps, JazaLedgerItemStatus } from '../utils/ledgerItems.js';
 export { toLedgerItemProps } from '../utils/ledgerItems.js';
 
 export type JazaLedgerProps = {
@@ -34,24 +35,29 @@ function DefaultLedgerItem({
   subtitle,
   credits,
   direction,
+  status,
   statusLabel,
 }: JazaLedgerItemProps) {
   const { theme } = useJaza();
   const { colors, spacing, radius } = theme;
-  const amountColor =
-    direction === 'credit' ? colors.success : colors.error;
-  const sign = direction === 'credit' ? '+' : '−';
+  const sign = direction === 'credit' ? '' : '−';
+
+  const badgeTone =
+    status === 'failure'
+      ? { fg: colors.error, bg: 'rgba(255, 180, 171, 0.18)' }
+      : status === 'pending'
+        ? { fg: '#e8b931', bg: 'rgba(232, 185, 49, 0.18)' }
+        : { fg: colors.primary, bg: 'rgba(87, 241, 219, 0.18)' };
 
   const styles = StyleSheet.create({
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: spacing.md,
+      paddingHorizontal: spacing.md,
       gap: spacing.md,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.outlineVariant,
     },
-    body: { flex: 1, gap: 2 },
+    body: { flex: 1, gap: 4 },
     title: {
       color: colors.onSurface,
       fontSize: 16,
@@ -61,40 +67,97 @@ function DefaultLedgerItem({
       color: colors.onSurfaceVariant,
       fontSize: 13,
     },
-    right: { alignItems: 'flex-end', gap: spacing.xs },
+    right: { alignItems: 'flex-end', gap: 4 },
     amount: {
-      color: amountColor,
+      color: colors.onSurface,
       fontSize: 16,
       fontWeight: '700',
       fontVariant: ['tabular-nums'],
     },
-    pill: {
-      backgroundColor: colors.surfaceContainerHigh,
+    badge: {
+      backgroundColor: badgeTone.bg,
       paddingHorizontal: spacing.sm,
       paddingVertical: 2,
-      borderRadius: radius.full,
+      borderRadius: radius.md,
     },
-    pillText: {
-      color: colors.onSurfaceVariant,
-      fontSize: 11,
-      fontWeight: '500',
+    badgeText: {
+      color: badgeTone.fg,
+      fontSize: 12,
+      fontWeight: '600',
     },
   });
 
   return (
     <View style={styles.row}>
       <View style={styles.body}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={1}>
+          {subtitle}
+        </Text>
       </View>
       <View style={styles.right}>
         <Text style={styles.amount}>
           {sign}
           {formatCredits(credits)}
         </Text>
-        <View style={styles.pill}>
-          <Text style={styles.pillText}>{statusLabel}</Text>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{statusLabel}</Text>
         </View>
+      </View>
+    </View>
+  );
+}
+
+function LedgerSectionCard({
+  section,
+  ItemComponent,
+  showDateLabel,
+}: {
+  section: LedgerSection;
+  ItemComponent: ComponentType<JazaLedgerItemProps>;
+  showDateLabel: boolean;
+}) {
+  const { theme } = useJaza();
+  const { colors, spacing, radius } = theme;
+
+  const styles = StyleSheet.create({
+    block: {
+      marginBottom: spacing.md,
+    },
+    dateLabel: {
+      color: colors.onSurfaceVariant,
+      fontSize: 14,
+      fontWeight: '500',
+      marginBottom: spacing.sm,
+    },
+    card: {
+      backgroundColor: colors.surfaceContainer,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.outlineVariant,
+      marginHorizontal: spacing.md,
+    },
+  });
+
+  return (
+    <View style={styles.block}>
+      {showDateLabel ? (
+        <Text style={styles.dateLabel}>{section.label}</Text>
+      ) : null}
+      <View style={styles.card}>
+        {section.items.map((item, index) => (
+          <View key={item.id}>
+            <ItemComponent {...item} />
+            {index < section.items.length - 1 ? (
+              <View style={styles.divider} />
+            ) : null}
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -124,11 +187,15 @@ export function JazaLedger({
         limit: pageSize,
         cursor: opts.cursor,
       });
-      const mapped = page.items.map(toLedgerItemProps);
+      const mapped = page.items.map((entry) =>
+        toLedgerItemProps(entry, {
+          subtitleStyle: mode === 'preview' ? 'date-time' : 'time',
+        }),
+      );
       setItems((prev) => (opts.replace ? mapped : [...prev, ...mapped]));
       setNextCursor(page.nextCursor ?? null);
     },
-    [client, pageSize],
+    [client, mode, pageSize],
   );
 
   const loadInitial = useCallback(async () => {
@@ -177,23 +244,29 @@ export function JazaLedger({
     [items, limit, mode],
   );
 
-  const rows = useMemo(
-    () => (mode === 'scroll' ? groupLedgerIntoRows(displayItems) : null),
-    [displayItems, mode],
+  const sections = useMemo(
+    () => groupLedgerIntoSections(displayItems),
+    [displayItems],
   );
+
+  /** Preview: single shaded card (no date headers). Scroll: date groups each in a card. */
+  const showDateLabels = mode === 'scroll';
+
+  const previewSections = useMemo((): LedgerSection[] => {
+    if (mode !== 'preview' || displayItems.length === 0) return sections;
+    return [
+      {
+        key: 'preview',
+        label: '',
+        items: displayItems,
+      },
+    ];
+  }, [displayItems, mode, sections]);
+
+  const listSections = mode === 'preview' ? previewSections : sections;
 
   const styles = StyleSheet.create({
     root: { flex: mode === 'scroll' ? 1 : undefined, ...style },
-    preview: { gap: 0 },
-    header: {
-      color: colors.onSurfaceVariant,
-      fontSize: 13,
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
-      marginTop: spacing.md,
-      marginBottom: spacing.xs,
-    },
     empty: {
       color: colors.onSurfaceVariant,
       fontSize: 14,
@@ -246,10 +319,15 @@ export function JazaLedger({
 
   if (mode === 'preview') {
     return (
-      <View style={[styles.root, styles.preview]}>
+      <View style={styles.root}>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {displayItems.map((item) => (
-          <ItemComponent key={item.id} {...item} />
+        {listSections.map((section) => (
+          <LedgerSectionCard
+            key={section.key}
+            section={section}
+            ItemComponent={ItemComponent}
+            showDateLabel={false}
+          />
         ))}
       </View>
     );
@@ -259,16 +337,15 @@ export function JazaLedger({
     <View style={styles.root}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlashList
-        data={rows ?? []}
-        keyExtractor={(row) => row.key}
-        getItemType={(row) => row.kind}
-        renderItem={({ item: row }) =>
-          row.kind === 'header' ? (
-            <Text style={styles.header}>{row.label}</Text>
-          ) : (
-            <ItemComponent {...row.item} />
-          )
-        }
+        data={listSections}
+        keyExtractor={(section) => section.key}
+        renderItem={({ item: section }) => (
+          <LedgerSectionCard
+            section={section}
+            ItemComponent={ItemComponent}
+            showDateLabel={showDateLabels}
+          />
+        )}
         onEndReached={() => void onEndReached()}
         onEndReachedThreshold={0.4}
         refreshControl={

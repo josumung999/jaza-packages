@@ -93,6 +93,10 @@ export type InitLedgerItem = {
   type: 'TOP_UP' | 'CONSUMPTION' | 'REFUND' | string;
   credits: number;
   description?: string;
+  /** Payment provider display name for top-ups */
+  provider?: string;
+  featureCode?: string;
+  featureName?: string;
   createdAt: string;
 };
 

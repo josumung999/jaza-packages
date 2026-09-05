@@ -19,6 +19,7 @@ export type {
   JazaLedgerProps,
   JazaLedgerItemProps,
 } from './widgets/JazaLedger.js';
+export type { JazaLedgerItemStatus } from './widgets/JazaLedger.js';
 
 export { PublicClient } from './api/publicClient.js';
 export type { PublicClientConfig } from './api/publicClient.js';
