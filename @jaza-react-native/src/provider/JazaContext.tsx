@@ -37,8 +37,16 @@ export type JazaContextValue = {
    * `JazaLedger` refetches when this value changes.
    */
   ledgerRevision: number;
+  /** Notify widgets after host-side consume / wallet changes. */
+  notifyWalletChanged: () => Promise<void>;
   /** Features from last init snapshot (empty until session auth) */
   features: InitFeature[];
+  getFeatureCost: (featureCode: string) => number | null;
+  canAfford: (featureCodeOrCredits: string | number) => boolean;
+  /** Alias of sheet open — paywall is the top-up sheet in v1 */
+  paywallOpen: boolean;
+  openPaywall: (opts?: { featureCode?: string }) => Promise<void>;
+  closePaywall: () => void;
   sheetOpen: boolean;
   step: TopUpStep;
   resultPhase: ResultPhase;

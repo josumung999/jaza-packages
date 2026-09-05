@@ -235,7 +235,27 @@ Requires peer `@shopify/flash-list` for `mode="scroll"`.
 
 ---
 
-## 7. What happens after the user taps Top up
+## 7. Gate actions — `JazaActionButton`
+
+**Gate only.** Compares wallet balance to a dashboard `featureCode` cost. Insufficient → opens paywall (top-up sheet). Enough → runs your `onPress`, which must call **your** BFF → `jaza.consume` (secret key). The SDK never debits.
+
+```tsx
+<JazaActionButton
+  featureCode="SEND_MESSAGE"
+  label="Send message"
+  onPress={async () => {
+    await fetch(`${API}/messages`, { method: 'POST', credentials: 'include' });
+  }}
+/>
+```
+
+UI bypass ≠ free credits — always enforce `consume` on the host.
+
+When consume fails with insufficient balance, Jaza also pushes `jaza.paywall.insufficient_credits` over `WS /v1/client/realtime` so the SDK can open the paywall.
+
+---
+
+## 8. What happens after the user taps Top up
 
 1. SDK calls `POST /v1/client/top-ups` with the session token → short-lived top-up JWT (internal)
 2. Bottom sheet opens → bundles and current balance
@@ -254,7 +274,8 @@ Requires peer `@shopify/flash-list` for `mode="scroll"`.
 | `JazaBalanceWidget` | Deprecated alias of `JazaBalance` |
 | `JazaTopUpButton` | Opens sheet via session-minted top-up |
 | `JazaLedger` | Transaction list (`preview` / `scroll`) |
-| `useJaza` | Advanced access to sheet state |
+| `JazaActionButton` | Feature gate (never consume) |
+| `useJaza` | Advanced access to sheet / features / paywall |
 | `PublicClient` | Low-level public / client API client |
 
 ---

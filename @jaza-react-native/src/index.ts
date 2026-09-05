@@ -20,6 +20,11 @@ export type {
   JazaLedgerItemProps,
 } from './widgets/JazaLedger.js';
 export type { JazaLedgerItemStatus } from './widgets/JazaLedger.js';
+export { JazaActionButton } from './widgets/JazaActionButton.js';
+export type {
+  JazaActionButtonProps,
+  JazaActionButtonRenderProps,
+} from './widgets/JazaActionButton.js';
 
 export { PublicClient } from './api/publicClient.js';
 export type { PublicClientConfig } from './api/publicClient.js';

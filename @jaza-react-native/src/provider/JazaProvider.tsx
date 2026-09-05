@@ -9,6 +9,7 @@ import {
 import { Appearance } from 'react-native';
 import { JazaSdkError } from '../api/errors.js';
 import { PublicClient } from '../api/publicClient.js';
+import { ClientRealtime } from '../api/realtimeClient.js';
 import type {
   Bundle,
   InitFeature,
@@ -26,6 +27,10 @@ import {
   pickDefaultCurrencyCode,
   type EnrichedCountry,
 } from '../utils/helpers.js';
+import {
+  canAffordFeature,
+  getFeatureCost as lookupFeatureCost,
+} from '../utils/featureGate.js';
 import {
   resolveTheme,
   type JazaTheme,
@@ -223,6 +228,11 @@ export function JazaProvider({
     }
   }, [client, runHandshake, useSessionAuth]);
 
+  const notifyWalletChanged = useCallback(async () => {
+    await refreshBalance();
+    bumpLedgerRevision();
+  }, [bumpLedgerRevision, refreshBalance]);
+
   useEffect(() => {
     if (useSessionAuth) return;
     void refreshBalance();
@@ -374,6 +384,24 @@ export function JazaProvider({
     void refreshBalance();
   }, [client, loadSessionData, refreshBalance, resetPaymentState]);
 
+  const openPaywall = useCallback(
+    async (_opts?: { featureCode?: string }) => {
+      await openTopUp();
+    },
+    [openTopUp],
+  );
+
+  const getFeatureCostFn = useCallback(
+    (featureCode: string) => lookupFeatureCost(features, featureCode),
+    [features],
+  );
+
+  const canAffordFn = useCallback(
+    (featureCodeOrCredits: string | number) =>
+      canAffordFeature(balance, features, featureCodeOrCredits),
+    [balance, features],
+  );
+
   const closeTopUp = useCallback(() => {
     clearPoll();
     setSheetOpen(false);
@@ -382,6 +410,29 @@ export function JazaProvider({
     setStep('offer');
     resetPaymentState();
   }, [clearPoll, client, resetPaymentState]);
+
+  const closePaywall = useCallback(() => {
+    closeTopUp();
+  }, [closeTopUp]);
+
+  const openPaywallRef = useRef(openPaywall);
+  openPaywallRef.current = openPaywall;
+
+  useEffect(() => {
+    if (!useSessionAuth) return;
+    if (status !== 'AUTHENTICATED') return;
+
+    const realtime = new ClientRealtime({
+      publishableKey,
+      apiBaseUrl,
+      getSessionToken: () => client.getSessionToken(),
+      onPaywallInsufficient: () => {
+        void openPaywallRef.current();
+      },
+    });
+    realtime.connect();
+    return () => realtime.disconnect();
+  }, [apiBaseUrl, client, publishableKey, status, useSessionAuth]);
 
   const goToOffer = useCallback(() => {
     clearPoll();
@@ -595,7 +646,13 @@ export function JazaProvider({
       balanceError,
       refreshBalance,
       ledgerRevision,
+      notifyWalletChanged,
       features,
+      getFeatureCost: getFeatureCostFn,
+      canAfford: canAffordFn,
+      paywallOpen: sheetOpen,
+      openPaywall,
+      closePaywall,
       sheetOpen,
       step,
       resultPhase,
@@ -640,7 +697,10 @@ export function JazaProvider({
       balanceError,
       refreshBalance,
       ledgerRevision,
+      notifyWalletChanged,
       features,
+      getFeatureCostFn,
+      canAffordFn,
       sheetOpen,
       step,
       resultPhase,
@@ -665,6 +725,8 @@ export function JazaProvider({
       failureReason,
       openTopUp,
       closeTopUp,
+      openPaywall,
+      closePaywall,
       goToOffer,
       goToPayment,
       submitDeposit,

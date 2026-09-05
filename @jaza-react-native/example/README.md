@@ -6,18 +6,20 @@ Private Expo demo for [`@jazadev/react-native`](../). **Not published to npm.** 
 
 1. Sign in with email + phone → stored in `data/users.json`
 2. First sign-in creates a Jaza customer via `@jazadev/node` and saves `customerId`
-3. Home: `JazaBalance` + `JazaTopUpButton` + `JazaLedger` preview; `/transactions` uses scroll mode
+3. Home: `JazaBalance` + `JazaTopUpButton` + `JazaLedger` preview + **Actions** (`JazaActionButton` per dashboard feature)
+4. `/transactions` uses `JazaLedger` scroll mode
 
 ## Host BFF routes (`app/api/jaza/`)
 
 | Route | Role |
 |-------|------|
 | `POST /api/jaza/init` | `jaza.init({ customerId })` → wired into `JazaProvider` via `getSession` |
+| `POST /api/jaza/actions` | `jaza.consume({ featureCode })` for ActionButton `onPress` (server only) |
 | `GET /api/jaza/balance` | Legacy host balance (unused when Provider uses init) |
 
 Demo auth: send `X-User-Id` (local user id). Keep the secret key in these routes only.
 
-After sign-in, home shows `useJaza().status` and `balanceCredits` from the client session. Top-up is minted by the SDK from that session (`POST /v1/client/top-ups`) — no host top-up-token route.
+`JazaActionButton` only **gates** affordability (opens paywall when short). Debits always happen on this BFF via `consume`. Insufficient balance also opens the paywall via Jaza client realtime (`WS /v1/client/realtime`).
 
 ## Setup
 
