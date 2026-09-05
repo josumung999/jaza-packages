@@ -107,3 +107,20 @@ export type JazaErrorBody = {
   error?: string;
   errors?: unknown;
 };
+
+export type WebhookEventType =
+  | 'jaza.webhook.topUp.pending'
+  | 'jaza.webhook.topUp.completed'
+  | 'jaza.webhook.topUp.failed'
+  | 'jaza.webhook.consumption.succeeded'
+  | 'jaza.webhook.consumption.insufficient_credits'
+  | 'jaza.webhook.consumption.failed'
+  | (string & {});
+
+export type WebhookEvent = {
+  id: string;
+  type: WebhookEventType;
+  /** Unix seconds */
+  created: number;
+  data: Record<string, unknown>;
+};

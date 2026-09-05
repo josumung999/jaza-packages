@@ -220,4 +220,35 @@ describe('Jaza', () => {
       message: 'Customer not found',
     });
   });
+
+  it('webhooks.constructEvent verifies signature', async () => {
+    const { createHmac } = await import('node:crypto');
+    const jaza = new Jaza({ secretKey, publicKey });
+    const webhookSecret = 'whsec_testsecret';
+    const payload = {
+      id: 'evt_1',
+      type: 'jaza.webhook.topUp.completed',
+      created: Math.floor(Date.now() / 1000),
+      data: { paymentRequestId: 'pr_1' },
+    };
+    const rawBody = JSON.stringify(payload);
+    const t = Math.floor(Date.now() / 1000);
+    const v1 = createHmac('sha256', webhookSecret)
+      .update(`${t}.${rawBody}`)
+      .digest('hex');
+    const event = jaza.webhooks.constructEvent(
+      rawBody,
+      `t=${t},v1=${v1}`,
+      webhookSecret,
+    );
+    expect(event.id).toBe('evt_1');
+    expect(event.type).toBe('jaza.webhook.topUp.completed');
+  });
+
+  it('webhooks.constructEvent rejects bad signature', () => {
+    const jaza = new Jaza({ secretKey, publicKey });
+    expect(() =>
+      jaza.webhooks.constructEvent('{}', 't=1,v1=deadbeef', 'whsec_x'),
+    ).toThrow(JazaError);
+  });
 });

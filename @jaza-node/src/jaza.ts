@@ -12,6 +12,7 @@ import type {
   Wallet,
 } from './types.js';
 import { DEFAULT_API_BASE_URL } from './version.js';
+import { constructEvent } from './webhooks.js';
 
 function assertConfig(config: JazaConfig): void {
   if (!config?.secretKey || typeof config.secretKey !== 'string') {
@@ -99,6 +100,17 @@ function assertConsume(params: ConsumeParams): void {
 export class Jaza {
   readonly publicKey: string;
   private readonly http: HttpClient;
+
+  /**
+   * Verify and parse merchant webhook payloads.
+   * @example
+   * ```ts
+   * const event = jaza.webhooks.constructEvent(rawBody, signatureHeader, secret);
+   * ```
+   */
+  readonly webhooks = {
+    constructEvent,
+  };
 
   constructor(config: JazaConfig) {
     assertConfig(config);
