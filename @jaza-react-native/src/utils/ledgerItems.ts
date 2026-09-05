@@ -36,23 +36,31 @@ function titleForType(type: string, description?: string): string {
   }
 }
 
+const DETAIL_LABEL_MAX = 10;
+
+function truncateDetailLabel(label: string, max = DETAIL_LABEL_MAX): string {
+  const trimmed = label.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, Math.max(0, max - 1))}…`;
+}
+
 /** Leading subtitle segment: provider for top-ups, feature for consumption. */
 export function ledgerDetailLabel(entry: InitLedgerItem): string {
+  let label: string;
   if (entry.type === 'TOP_UP') {
-    return entry.provider?.trim() || 'Mobile Money';
-  }
-  if (entry.type === 'CONSUMPTION') {
-    return (
+    label = entry.provider?.trim() || 'Mobile Money';
+  } else if (entry.type === 'CONSUMPTION') {
+    label =
       entry.featureName?.trim() ||
       entry.featureCode?.trim() ||
       entry.description?.trim() ||
-      'Purchase'
-    );
+      'Purchase';
+  } else if (entry.type === 'REFUND') {
+    label = 'Refund';
+  } else {
+    label = entry.type;
   }
-  if (entry.type === 'REFUND') {
-    return 'Refund';
-  }
-  return entry.type;
+  return truncateDetailLabel(label);
 }
 
 function directionForType(type: string): 'credit' | 'debit' {
@@ -82,7 +90,7 @@ export function formatLedgerDateTime(iso: string): string {
       hour: '2-digit',
       minute: '2-digit',
     });
-    return `${dayMonth} · ${time}`;
+    return `${dayMonth}, ${time}`;
   } catch {
     return iso;
   }

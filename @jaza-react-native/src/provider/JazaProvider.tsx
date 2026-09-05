@@ -147,6 +147,11 @@ export function JazaProvider({
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [balanceError, setBalanceError] = useState<string | null>(null);
+  const [ledgerRevision, setLedgerRevision] = useState(0);
+
+  const bumpLedgerRevision = useCallback(() => {
+    setLedgerRevision((n) => n + 1);
+  }, []);
 
   const applyInitResult = useCallback(
     (result: InitResult) => {
@@ -411,6 +416,7 @@ export function JazaProvider({
               clearPoll();
               setResultPhase('success');
               await refreshBalance();
+              bumpLedgerRevision();
               onTopUpComplete?.({
                 depositId: updated.id,
                 credits,
@@ -430,7 +436,7 @@ export function JazaProvider({
         })();
       }, POLL_INTERVAL_MS);
     },
-    [clearPoll, client, onTopUpComplete, refreshBalance],
+    [bumpLedgerRevision, clearPoll, client, onTopUpComplete, refreshBalance],
   );
 
   const submitDeposit = useCallback(async () => {
@@ -450,6 +456,7 @@ export function JazaProvider({
       if (created.status === 'COMPLETED') {
         setResultPhase('success');
         await refreshBalance();
+        bumpLedgerRevision();
         onTopUpComplete?.({
           depositId: created.id,
           credits: created.credits,
@@ -475,6 +482,7 @@ export function JazaProvider({
       );
     }
   }, [
+    bumpLedgerRevision,
     client,
     onTopUpComplete,
     phoneNational,
@@ -586,6 +594,7 @@ export function JazaProvider({
       balanceLoading,
       balanceError,
       refreshBalance,
+      ledgerRevision,
       features,
       sheetOpen,
       step,
@@ -630,6 +639,7 @@ export function JazaProvider({
       balanceLoading,
       balanceError,
       refreshBalance,
+      ledgerRevision,
       features,
       sheetOpen,
       step,

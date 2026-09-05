@@ -169,7 +169,7 @@ export function JazaLedger({
   style,
   ItemComponent = DefaultLedgerItem,
 }: JazaLedgerProps) {
-  const { theme, client, status } = useJaza();
+  const { theme, client, status, ledgerRevision } = useJaza();
   const { colors, spacing } = theme;
 
   const [items, setItems] = useState<JazaLedgerItemProps[]>([]);
@@ -213,7 +213,7 @@ export function JazaLedger({
 
   useEffect(() => {
     void loadInitial();
-  }, [loadInitial]);
+  }, [loadInitial, ledgerRevision]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

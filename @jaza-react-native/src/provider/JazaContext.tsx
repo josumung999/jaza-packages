@@ -32,6 +32,11 @@ export type JazaContextValue = {
   balanceLoading: boolean;
   balanceError: string | null;
   refreshBalance: () => Promise<void>;
+  /**
+   * Increments when wallet activity changes (e.g. successful top-up).
+   * `JazaLedger` refetches when this value changes.
+   */
+  ledgerRevision: number;
   /** Features from last init snapshot (empty until session auth) */
   features: InitFeature[];
   sheetOpen: boolean;
