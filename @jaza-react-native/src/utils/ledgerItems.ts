@@ -26,6 +26,18 @@ export type LedgerSubtitleStyle = 'time' | 'date-time';
 
 const TITLE_LABEL_MAX = 20;
 
+/** BCP 47 tags for Intl date/time formatting. */
+const LOCALE_TAGS: Record<JazaLocale, string> = {
+  en: 'en-US',
+  fr: 'fr-FR',
+  sw: 'sw-TZ',
+  ln: 'ln-CD',
+};
+
+export function toBcp47Locale(locale: JazaLocale): string {
+  return LOCALE_TAGS[locale] ?? LOCALE_TAGS.en;
+}
+
 function truncateLabel(label: string, max: number): string {
   const trimmed = label.trim();
   if (trimmed.length <= max) return trimmed;
@@ -81,9 +93,12 @@ function directionForType(type: string): 'credit' | 'debit' {
   return type === 'CONSUMPTION' ? 'debit' : 'credit';
 }
 
-export function formatLedgerTime(iso: string): string {
+export function formatLedgerTime(
+  iso: string,
+  locale: JazaLocale = 'en',
+): string {
   try {
-    return new Date(iso).toLocaleTimeString(undefined, {
+    return new Date(iso).toLocaleTimeString(toBcp47Locale(locale), {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -93,14 +108,18 @@ export function formatLedgerTime(iso: string): string {
 }
 
 /** e.g. `05 Sep, 15:04` for preview rows without a date header */
-export function formatLedgerDateTime(iso: string): string {
+export function formatLedgerDateTime(
+  iso: string,
+  locale: JazaLocale = 'en',
+): string {
   try {
     const d = new Date(iso);
-    const dayMonth = d.toLocaleDateString(undefined, {
+    const tag = toBcp47Locale(locale);
+    const dayMonth = d.toLocaleDateString(tag, {
       day: '2-digit',
       month: 'short',
     });
-    const time = d.toLocaleTimeString(undefined, {
+    const time = d.toLocaleTimeString(tag, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -111,8 +130,11 @@ export function formatLedgerDateTime(iso: string): string {
 }
 
 /** @deprecated Prefer formatLedgerTime / formatLedgerDateTime */
-export function formatLedgerSubtitle(iso: string): string {
-  return formatLedgerDateTime(iso);
+export function formatLedgerSubtitle(
+  iso: string,
+  locale: JazaLocale = 'en',
+): string {
+  return formatLedgerDateTime(iso, locale);
 }
 
 export function ledgerSectionLabel(
@@ -130,7 +152,7 @@ export function ledgerSectionLabel(
       a.getDate() === b.getDate();
     if (sameDay(d, today)) return t(locale, 'ledger.section.today');
     if (sameDay(d, yesterday)) return t(locale, 'ledger.section.yesterday');
-    return d.toLocaleDateString(undefined, {
+    return d.toLocaleDateString(toBcp47Locale(locale), {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -148,8 +170,8 @@ export function toLedgerItemProps(
   const kind = ledgerKindLabel(entry.type, locale);
   const when =
     opts?.subtitleStyle === 'date-time'
-      ? formatLedgerDateTime(entry.createdAt)
-      : formatLedgerTime(entry.createdAt);
+      ? formatLedgerDateTime(entry.createdAt, locale)
+      : formatLedgerTime(entry.createdAt, locale);
   return {
     id: entry.id,
     type: entry.type,

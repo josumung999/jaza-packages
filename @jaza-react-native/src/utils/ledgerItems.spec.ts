@@ -75,11 +75,27 @@ describe('toLedgerItemProps', () => {
         provider: 'M-Pesa',
         createdAt: '2026-09-05T12:00:00.000Z',
       },
-      { subtitleStyle: 'date-time' },
+      { subtitleStyle: 'date-time', locale: 'en' },
     );
     expect(props.title).toBe('M-Pesa');
     expect(props.subtitle).toMatch(/^Top-up · /);
     expect(props.subtitle).toMatch(/Sep/i);
+  });
+
+  it('localizes date-time for French locale', () => {
+    const props = toLedgerItemProps(
+      {
+        id: '1',
+        type: 'TOP_UP',
+        credits: 50,
+        provider: 'M-Pesa',
+        createdAt: '2026-09-05T12:00:00.000Z',
+      },
+      { subtitleStyle: 'date-time', locale: 'fr' },
+    );
+    expect(props.subtitle).toMatch(/^Recharge · /);
+    // French short month for September (sept. / sept)
+    expect(props.subtitle.toLowerCase()).toMatch(/sept/);
   });
 
   it('maps consumption with feature title and Purchase subtitle', () => {
