@@ -42,10 +42,19 @@ export function enrichCountries(
 }
 
 export function buildE164(dialCode: string, nationalNumber: string): string {
-  const digits = nationalNumber.replace(/\D/g, '');
+  let digits = nationalNumber.replace(/\D/g, '');
   const code = dialCode.replace(/\D/g, '');
+  // National numbers often include a leading trunk 0 (KE 07…, CD 08…).
+  // E.164 must be country code + subscriber digits without that 0.
+  if (digits.startsWith('0')) {
+    digits = digits.replace(/^0+/, '');
+  }
   if (digits.length < 6) {
     throw new Error('Phone number too short');
+  }
+  // If the user pasted full international already, don't double the country code.
+  if (digits.startsWith(code) && digits.length >= code.length + 6) {
+    return digits;
   }
   return `${code}${digits}`;
 }

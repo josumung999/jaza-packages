@@ -13,6 +13,15 @@ describe('helpers', () => {
     expect(buildE164('254', '712 345 678')).toBe('254712345678');
   });
 
+  it('buildE164 strips national leading 0', () => {
+    expect(buildE164('254', '0712345678')).toBe('254712345678');
+    expect(buildE164('243', '0812345678')).toBe('243812345678');
+  });
+
+  it('buildE164 does not double country code', () => {
+    expect(buildE164('254', '254712345678')).toBe('254712345678');
+  });
+
   it('pickDefaultCurrencyCode prefers non-USD', () => {
     expect(pickDefaultCurrencyCode(['USD', 'CDF'])).toBe('CDF');
   });
