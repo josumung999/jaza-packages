@@ -132,6 +132,23 @@ export class Jaza {
   }
 
   /**
+   * Fetch a customer by id in the current key environment.
+   * A sandbox `cus_…` returns 404 under live keys (and vice versa).
+   */
+  getCustomer(customerId: string): Promise<Customer> {
+    if (!customerId?.trim()) {
+      throw new JazaError('customerId is required', {
+        statusCode: 0,
+        code: 'invalid_request',
+      });
+    }
+    return this.http.request<Customer>(
+      'GET',
+      `/v1/customers/${encodeURIComponent(customerId)}`,
+    );
+  }
+
+  /**
    * Mint a client session for the mobile/web SDK (`sessionToken` + wallet/features snapshot).
    * Host apps typically expose this as `POST /api/jaza/init`. Cannot debit — use `consume` on the server.
    */

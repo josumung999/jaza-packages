@@ -66,6 +66,29 @@ describe('Jaza', () => {
     expect(() => jaza.createCustomer({ name: 'Amina' })).toThrow(JazaError);
   });
 
+  it('getCustomer fetches by id', async () => {
+    mockFetch((url, init) => {
+      expect(url).toBe('https://api.jaza.dev/v1/customers/cus_1');
+      expect(init?.method).toBe('GET');
+      return new Response(
+        JSON.stringify({
+          id: 'cus_1',
+          appId: 'app_1',
+          name: 'Amina',
+          email: 'a@example.com',
+          phoneNumber: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        }),
+        { status: 200 },
+      );
+    });
+
+    const jaza = new Jaza({ secretKey, publicKey });
+    const customer = await jaza.getCustomer('cus_1');
+    expect(customer.id).toBe('cus_1');
+  });
+
   it('topUp returns token', async () => {
     mockFetch((url) => {
       expect(url).toBe('https://api.jaza.dev/v1/top-ups');

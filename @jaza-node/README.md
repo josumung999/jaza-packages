@@ -52,6 +52,7 @@ console.log(wallet.balanceCredits);
 | Method | Description |
 |--------|-------------|
 | `createCustomer({ name, email?, phoneNumber? })` | Returns `cus_…` |
+| `getCustomer(customerId)` | Fetch customer in the current key environment |
 | `init({ customerId })` | Client session JWT + wallet/features/ledger snapshot |
 | `topUp({ customerId })` | Top-up session + JWT `token` (advanced / legacy BFF) |
 | `getBalance({ customerId })` | Wallet with `balanceCredits` |

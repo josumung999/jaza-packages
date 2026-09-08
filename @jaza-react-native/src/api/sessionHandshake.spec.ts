@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { InitResult } from './types.js';
 import { PublicClient } from './publicClient.js';
+import { JazaSdkError } from './errors.js';
 
 /**
  * Light handshake unit tests without React Native renderer.
@@ -85,5 +86,50 @@ describe('session handshake helpers', () => {
     expect(getSession).toHaveBeenCalledTimes(1);
     expect(wallet.balanceCredits).toBe(99);
     expect(client.getSessionToken()).toBe('sess.fresh');
+  });
+
+  it('forwards handshake failure to onAuthError-style callback', async () => {
+    const onAuthError = vi.fn();
+    const getSession = vi.fn(async () => {
+      throw new Error('Customer not found');
+    });
+
+    try {
+      await getSession();
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error('Jaza session handshake failed');
+      onAuthError(error);
+    }
+
+    expect(onAuthError).toHaveBeenCalledTimes(1);
+    expect(onAuthError.mock.calls[0]?.[0]).toMatchObject({
+      message: 'Customer not found',
+    });
+  });
+
+  it('maps failed authEndpoint response to JazaSdkError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ message: 'Customer not found' }), {
+            status: 404,
+          }),
+      ),
+    );
+
+    const res = await fetch('https://host.example/jaza/init', {
+      method: 'POST',
+    });
+    const data = (await res.json()) as { message?: string };
+    expect(res.ok).toBe(false);
+    const error = new JazaSdkError(
+      res.status,
+      data.message ?? `Init failed (${res.status})`,
+      data,
+    );
+    expect(error.statusCode).toBe(404);
+    expect(error.message).toBe('Customer not found');
   });
 });

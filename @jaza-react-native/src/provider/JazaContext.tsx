@@ -30,6 +30,8 @@ export type JazaContextValue = {
   client: PublicClient;
   /** Session handshake status (init / authEndpoint) */
   status: JazaAuthStatus;
+  /** Last handshake failure message when status is UNAUTHENTICATED; otherwise null. */
+  authError: string | null;
   /**
    * Credit balance. Prefer `balanceCredits`; `balance` is kept for existing widgets.
    */

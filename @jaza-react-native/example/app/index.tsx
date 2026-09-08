@@ -17,7 +17,7 @@ import { useAppPrefs } from '@/lib/app-prefs';
 import { apiFetch } from '@/lib/api';
 
 export default function SignInScreen() {
-  const { signIn } = useAuth();
+  const { signIn, authError, setAuthError } = useAuth();
   const router = useRouter();
   const { themePreference } = useAppPrefs();
   const systemScheme = useColorScheme();
@@ -37,6 +37,7 @@ export default function SignInScreen() {
 
   async function onSubmit() {
     setError(null);
+    setAuthError(null);
     setSubmitting(true);
     try {
       const res = await apiFetch('/api/auth/sign-in', {
@@ -145,7 +146,8 @@ export default function SignInScreen() {
         <Text style={styles.title}>Sample sign-in</Text>
         <Text style={styles.subtitle}>
           Email and phone are stored locally and create a Jaza customer on first
-          use.
+          use. Switching sandbox ↔ live keys remints a customer for the current
+          environment and overwrites the stored customer id.
         </Text>
 
         <Text style={styles.label}>Email</Text>
@@ -171,6 +173,7 @@ export default function SignInScreen() {
           onChangeText={setPhoneNumber}
         />
 
+        {authError ? <Text style={styles.error}>{authError}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <Pressable

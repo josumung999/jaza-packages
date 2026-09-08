@@ -90,8 +90,9 @@ export default function RootLayout() {
           if (!res.ok) throw new Error('Jaza init failed');
           return (await res.json()) as InitResult;
         }}
-        onAuthError={() => {
-          console.warn('Jaza session expired');
+        onAuthError={(error) => {
+          console.warn('Jaza session failed', error.message);
+          // Navigate away before unmounting JazaProvider if screens call useJaza.
         }}
         onTopUpComplete={({ credits }) => {
           console.log('Top-up completed', credits);

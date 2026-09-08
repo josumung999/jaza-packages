@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import type { JazaEnv } from './jaza-env';
 import type { SampleUser } from './types';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -49,6 +50,7 @@ export async function createUser(input: {
   email: string;
   phoneNumber: string;
   customerId: string;
+  jazaEnv: JazaEnv;
 }): Promise<SampleUser> {
   const users = await readUsers();
   const user: SampleUser = {
@@ -56,9 +58,28 @@ export async function createUser(input: {
     email: input.email.trim().toLowerCase(),
     phoneNumber: input.phoneNumber.trim(),
     customerId: input.customerId,
+    jazaEnv: input.jazaEnv,
     createdAt: new Date().toISOString(),
   };
   users.push(user);
   await writeUsers(users);
   return user;
+}
+
+/** Overwrite customerId after sandbox→live (or reverse) remint. */
+export async function updateUserCustomerId(
+  userId: string,
+  customerId: string,
+  jazaEnv: JazaEnv,
+): Promise<SampleUser | undefined> {
+  const users = await readUsers();
+  const index = users.findIndex((u) => u.id === userId);
+  if (index < 0) return undefined;
+  users[index] = {
+    ...users[index],
+    customerId,
+    jazaEnv,
+  };
+  await writeUsers(users);
+  return users[index];
 }

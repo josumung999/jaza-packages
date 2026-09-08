@@ -54,7 +54,12 @@ export type JazaProviderProps = {
   authEndpoint?: string;
   /** Imperative init handshake; preferred over `authEndpoint` when both set. */
   getSession?: () => Promise<InitResult>;
-  onAuthError?: () => void;
+  /**
+   * Called when the client-session handshake fails.
+   * Do not unmount `JazaProvider` while screens that call `useJaza` are still active —
+   * navigate away first, then clear host session.
+   */
+  onAuthError?: (error: Error) => void;
   /**
    * @deprecated Prefer `getSession` / `authEndpoint`. Used only when neither is set.
    */
@@ -160,6 +165,7 @@ export function JazaProvider({
   const [status, setStatus] = useState<JazaAuthStatus>(
     useSessionAuth ? 'INITIALIZING' : 'AUTHENTICATED',
   );
+  const [authError, setAuthError] = useState<string | null>(null);
   const [features, setFeatures] = useState<InitFeature[]>([]);
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
@@ -176,6 +182,7 @@ export function JazaProvider({
       setFeatures(result.features ?? []);
       setBalance(result.wallet.balanceCredits);
       setStatus('AUTHENTICATED');
+      setAuthError(null);
       setBalanceError(null);
     },
     [client],
@@ -193,12 +200,15 @@ export function JazaProvider({
       }
       applyInitResult(result);
       return true;
-    } catch {
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error('Jaza session handshake failed');
       client.setSessionToken(null);
       setFeatures([]);
       setBalance(null);
+      setAuthError(error.message);
       setStatus('UNAUTHENTICATED');
-      onAuthErrorRef.current?.();
+      onAuthErrorRef.current?.(error);
       return false;
     }
   }, [applyInitResult, client]);
@@ -671,6 +681,7 @@ export function JazaProvider({
       publishableKey,
       client,
       status,
+      authError,
       balanceCredits: balance,
       balance,
       balanceLoading,
@@ -727,6 +738,7 @@ export function JazaProvider({
       publishableKey,
       client,
       status,
+      authError,
       balance,
       balanceLoading,
       balanceError,

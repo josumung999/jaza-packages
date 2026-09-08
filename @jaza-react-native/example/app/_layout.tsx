@@ -16,7 +16,7 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 function AuthGate({ children }: { children: ReactNode }) {
-  const { session, loading, signOut } = useAuth();
+  const { session, loading, signOut, setAuthError } = useAuth();
   const { themePreference, locale } = useAppPrefs();
   const pathname = usePathname();
   const router = useRouter();
@@ -29,17 +29,17 @@ function AuthGate({ children }: { children: ReactNode }) {
       : themePreference;
   const chrome = resolvedMode === 'dark' ? darkTheme : lightTheme;
 
+  const onSignInRoute = pathname === '/' || pathname === '/index';
+
   useEffect(() => {
     if (loading) return;
 
-    const onSignIn = pathname === '/' || pathname === '/index';
-
-    if (!session && !onSignIn) {
+    if (!session && !onSignInRoute) {
       router.replace('/');
-    } else if (session && onSignIn) {
+    } else if (session && onSignInRoute) {
       router.replace('/home');
     }
-  }, [session, loading, pathname, router]);
+  }, [session, loading, onSignInRoute, pathname, router]);
 
   const getSession = useCallback(async (): Promise<InitResult> => {
     if (!session) throw new Error('Not signed in');
@@ -49,6 +49,7 @@ function AuthGate({ children }: { children: ReactNode }) {
     });
     const data = (await res.json().catch(() => ({}))) as InitResult & {
       message?: string;
+      code?: string;
     };
     if (!res.ok) {
       throw new Error(data.message ?? 'Jaza init failed');
@@ -56,10 +57,19 @@ function AuthGate({ children }: { children: ReactNode }) {
     return data;
   }, [session]);
 
-  const onAuthError = useCallback(() => {
-    console.warn('[jaza] session auth failed');
-    void signOut();
-  }, [signOut]);
+  const onAuthError = useCallback(
+    (error: Error) => {
+      console.warn('[jaza] session auth failed', error.message);
+      setAuthError(
+        error.message ||
+          'Jaza session failed. If you switched sandbox/live keys, sign in again to remint the customer.',
+      );
+      // Navigate first so /home (useJaza) is not left mounted without JazaProvider.
+      router.replace('/');
+      void signOut();
+    },
+    [router, setAuthError, signOut],
+  );
 
   if (loading) {
     return (
@@ -76,7 +86,22 @@ function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
+  // Avoid rendering screens that call useJaza after session clear but before redirect.
   if (!session) {
+    if (!onSignInRoute) {
+      return (
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: chrome.colors.background,
+          }}
+        >
+          <ActivityIndicator size="large" color={chrome.colors.primary} />
+        </View>
+      );
+    }
     return <>{children}</>;
   }
 
