@@ -59,38 +59,40 @@ export function JazaTopUpButton({
   }
 
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       <button
         type="button"
         className="jaza-btn jaza-btn-primary"
         style={style}
         onClick={handlePress}
         disabled={loading}
+        aria-busy={loading}
       >
-        {loading ? (
-          <span
-            className="jaza-spin"
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              border: `2px solid ${colors.onPrimaryContainer}40`,
-              borderTopColor: colors.onPrimaryContainer,
-              display: 'inline-block',
-              boxSizing: 'border-box',
-            }}
-            aria-label={t(locale, 'common.loading')}
+        <span className="jaza-btn-label" data-loading={loading ? 'true' : 'false'}>
+          <span>{displayLabel}</span>
+          <Icon
+            name="arrow-forward"
+            size={20}
+            color={colors.onPrimaryContainer}
           />
-        ) : (
-          <>
-            <span>{displayLabel}</span>
-            <Icon
-              name="arrow-forward"
-              size={20}
-              color={colors.onPrimaryContainer}
+        </span>
+        {loading ? (
+          <span className="jaza-btn-spinner" aria-hidden>
+            <span
+              className="jaza-spin"
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                border: `2px solid ${colors.onPrimaryContainer}40`,
+                borderTopColor: colors.onPrimaryContainer,
+                display: 'inline-block',
+                boxSizing: 'border-box',
+              }}
+              aria-label={t(locale, 'common.loading')}
             />
-          </>
-        )}
+          </span>
+        ) : null}
       </button>
       {error ? (
         <div

@@ -143,7 +143,7 @@ function ActionsSection({ userId }: { userId: string }) {
   }
 
   return (
-    <div style={{ display: 'grid', gap: 10 }}>
+    <div className="jaza-actions-row">
       {features.map((feature) => (
         <JazaActionButton
           key={feature.code}
@@ -183,18 +183,25 @@ export default function HomePage() {
   if (!session) return null;
 
   return (
-    <main
+    <div
       style={{
-        maxWidth: 520,
-        margin: '0 auto',
-        padding: '24px 20px 40px',
-        background: colors.background,
         minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
+        width: '100%',
+        background: colors.background,
       }}
     >
+      <main
+        style={{
+          width: '100%',
+          maxWidth: '56rem',
+          margin: '0 auto',
+          padding: '24px 20px 40px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          boxSizing: 'border-box',
+        }}
+      >
       <header
         style={{
           display: 'flex',
@@ -321,6 +328,7 @@ export default function HomePage() {
       >
         Customer ID: {session.customerId}
       </p>
-    </main>
+      </main>
+    </div>
   );
 }

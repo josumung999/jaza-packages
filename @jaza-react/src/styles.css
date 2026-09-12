@@ -102,7 +102,8 @@
 .jaza-drawer-header {
   display: flex;
   justify-content: flex-end;
-  padding: 0 var(--jaza-space-gutter, 20px);
+  padding: var(--jaza-space-md, 16px) var(--jaza-space-gutter, 20px)
+    var(--jaza-space-sm, 8px);
   margin-bottom: var(--jaza-space-sm, 8px);
   flex-shrink: 0;
 }
@@ -119,6 +120,7 @@
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .jaza-drawer-close:disabled {
@@ -262,6 +264,9 @@
   font: inherit;
   text-decoration: none;
   box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  min-height: 52px;
 }
 
 .jaza-btn:disabled {
@@ -282,7 +287,7 @@
 }
 
 .jaza-btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.85;
 }
 
 .jaza-btn-muted {
@@ -293,6 +298,46 @@
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.5px;
+}
+
+.jaza-btn-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--jaza-space-sm, 8px);
+}
+
+.jaza-btn-label[data-loading='true'] {
+  visibility: hidden;
+}
+
+.jaza-btn-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.jaza-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .jaza-actions-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .jaza-actions-row > * {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
 }
 
 .jaza-skeleton {
