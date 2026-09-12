@@ -229,6 +229,51 @@ describe('Jaza', () => {
     expect(checked.status).toBe('PENDING');
   });
 
+  it('allows featureCode + credits together (override)', async () => {
+    mockFetch(async (input, init) => {
+      const url = String(input);
+      const body = JSON.parse(String(init?.body ?? '{}')) as Record<
+        string,
+        unknown
+      >;
+      expect(url).toContain('/v1/credits/consume');
+      expect(body.featureCode).toBe('AI_CHAT');
+      expect(body.credits).toBe(42);
+      return new Response(
+        JSON.stringify({
+          wallet: {
+            id: 'w1',
+            appId: 'a1',
+            externalUserId: 'cus_1',
+            customerId: 'cus_1',
+            balanceCredits: 58,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          ledgerEntry: {
+            id: 'le1',
+            direction: 'DEBIT',
+            amountCredits: 42,
+            balanceAfter: 58,
+            reason: 'CONSUME',
+            idempotencyKey: 'k-override',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        }),
+        { status: 201 },
+      );
+    });
+
+    const jaza = new Jaza({ secretKey, publicKey });
+    const result = await jaza.consume({
+      customerId: 'cus_1',
+      featureCode: 'AI_CHAT',
+      credits: 42,
+      idempotencyKey: 'k-override',
+    });
+    expect(result.ledgerEntry.amountCredits).toBe(42);
+  });
+
   it('maps 4xx to JazaError', async () => {
     mockFetch(() =>
       new Response(JSON.stringify({ message: 'Customer not found', error: 'Not Found' }), {

@@ -77,12 +77,6 @@ function assertConsume(params: ConsumeParams): void {
       code: 'invalid_request',
     });
   }
-  if (hasFeature && hasCredits) {
-    throw new JazaError('Provide featureCode or credits, not both', {
-      statusCode: 0,
-      code: 'invalid_request',
-    });
-  }
 }
 
 /**

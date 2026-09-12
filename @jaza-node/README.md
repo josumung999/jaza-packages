@@ -38,6 +38,14 @@ await jaza.consume({
   idempotencyKey: `msg_${Date.now()}`,
 });
 
+// Optional: override debit amount while still attributing the feature
+await jaza.consume({
+  customerId: customer.id,
+  featureCode: 'AI_CHAT',
+  credits: 42, // variable usage (e.g. tokens) — not the dashboard default
+  idempotencyKey: `ai_${Date.now()}`,
+});
+
 // Optional: server-minted top-up JWT (advanced). Prefer client session
 // POST /v1/client/top-ups once the RN SDK uses init.
 const session = await jaza.topUp({ customerId: customer.id });
@@ -56,7 +64,7 @@ console.log(wallet.balanceCredits);
 | `init({ customerId })` | Client session JWT + wallet/features/ledger snapshot |
 | `topUp({ customerId })` | Top-up session + JWT `token` (advanced / legacy BFF) |
 | `getBalance({ customerId })` | Wallet with `balanceCredits` |
-| `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet (server only) |
+| `consume({ customerId, featureCode?, credits?, idempotencyKey })` | Debit wallet (server only). `featureCode` alone uses dashboard cost; both together override amount while attributing the feature |
 | `check({ topUpId })` | Session status |
 
 Errors throw `JazaError` with `statusCode`, `code`, and `raw`.
