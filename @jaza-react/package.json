@@ -1,0 +1,68 @@
+{
+  "name": "@jazadev/react",
+  "version": "0.1.0",
+  "description": "Official React web SDK for Jaza (Next.js, Remix, Vite, and more)",
+  "license": "MIT",
+  "author": "Jaza",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup && node ./scripts/copy-css.mjs",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@base-ui/react": ">=1.0.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^26.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "jaza",
+    "billing",
+    "credits",
+    "momo",
+    "react",
+    "nextjs",
+    "remix",
+    "sdk"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/josumung999/jaza-packages.git",
+    "directory": "@jaza-react"
+  },
+  "homepage": "https://github.com/josumung999/jaza-packages/tree/main/@jaza-react",
+  "bugs": {
+    "url": "https://github.com/josumung999/jaza-packages/issues"
+  }
+}

@@ -1,0 +1,350 @@
+/**
+ * @jazadev/react styles
+ *
+ * Host note: drawers use `position: fixed` relative to the viewport. If a host
+ * ancestor creates a containing block (e.g. `transform` / `filter`), prefer
+ * portaling to `document.body`. Setting `body { position: relative }` is fine
+ * for hosts that need a positioned root — it does not break fixed drawers.
+ */
+
+/* ── Drawer shell (Base UI) ─────────────────────────────────────────────── */
+
+.jaza-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: var(--jaza-overlay, rgba(12, 15, 15, 0.8));
+  --backdrop-opacity: 1;
+  opacity: calc(var(--backdrop-opacity) * (1 - var(--drawer-swipe-progress, 0)));
+  transition: opacity 400ms ease;
+}
+
+.jaza-drawer-backdrop[data-starting-style],
+.jaza-drawer-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.jaza-drawer-backdrop[data-ending-style] {
+  transition-duration: calc(var(--drawer-swipe-strength, 1) * 400ms);
+}
+
+.jaza-drawer-backdrop[data-swiping] {
+  transition-duration: 0ms;
+}
+
+.jaza-drawer-viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: flex;
+  pointer-events: none;
+}
+
+.jaza-drawer-popup {
+  pointer-events: auto;
+  position: relative;
+  background-color: var(--jaza-surface, #121414);
+  color: var(--jaza-on-surface, #e2e2e2);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  transition: transform 400ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.jaza-drawer-popup[data-swiping] {
+  transition-duration: 0ms;
+}
+
+.jaza-drawer-popup[data-ending-style] {
+  transition-duration: calc(var(--drawer-swipe-strength, 1) * 400ms);
+}
+
+/* Bottom sheet (mobile) */
+.jaza-drawer-popup[data-swipe-direction='down'] {
+  margin-top: auto;
+  width: 100%;
+  max-height: min(92vh, 900px);
+  border-radius: var(--jaza-radius-xl, 16px) var(--jaza-radius-xl, 16px) 0 0;
+  transform: translateY(
+    calc(var(--drawer-snap-point-offset, 0px) + var(--drawer-swipe-movement-y, 0px))
+  );
+}
+
+.jaza-drawer-popup[data-swipe-direction='down'][data-starting-style],
+.jaza-drawer-popup[data-swipe-direction='down'][data-ending-style] {
+  transform: translateY(100%);
+}
+
+/* Right panel (desktop) */
+.jaza-drawer-popup[data-swipe-direction='right'] {
+  margin-left: auto;
+  height: 100%;
+  width: min(420px, 100vw);
+  border-radius: var(--jaza-radius-xl, 16px) 0 0 var(--jaza-radius-xl, 16px);
+  transform: translateX(var(--drawer-swipe-movement-x, 0px));
+}
+
+.jaza-drawer-popup[data-swipe-direction='right'][data-starting-style],
+.jaza-drawer-popup[data-swipe-direction='right'][data-ending-style] {
+  transform: translateX(100%);
+}
+
+.jaza-drawer-handle {
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--jaza-surface-container-highest, #333535);
+  margin: var(--jaza-space-sm, 8px) auto;
+  flex-shrink: 0;
+}
+
+.jaza-drawer-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--jaza-space-gutter, 20px);
+  margin-bottom: var(--jaza-space-sm, 8px);
+  flex-shrink: 0;
+}
+
+.jaza-drawer-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--jaza-radius-full, 9999px);
+  background-color: var(--jaza-surface-container-high, #282a2b);
+  color: var(--jaza-on-surface-variant, #bacac5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.jaza-drawer-close:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.jaza-drawer-close:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.jaza-drawer-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--jaza-space-gutter, 20px)
+    calc(var(--jaza-space-xl, 40px) + env(safe-area-inset-bottom, 0px));
+}
+
+.jaza-drawer-title-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Nested picker overlays ─────────────────────────────────────────────── */
+
+.jaza-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-color: var(--jaza-overlay, rgba(12, 15, 15, 0.8));
+}
+
+.jaza-picker-panel {
+  background-color: var(--jaza-surface, #121414);
+  border-radius: var(--jaza-radius-xl, 16px) var(--jaza-radius-xl, 16px) 0 0;
+  padding: var(--jaza-space-md, 16px) var(--jaza-space-gutter, 20px)
+    calc(var(--jaza-space-md, 16px) + env(safe-area-inset-bottom, 0px));
+  max-height: 85%;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.jaza-picker-search {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--jaza-surface-container-high, #282a2b);
+  border: none;
+  border-radius: var(--jaza-radius-lg, 12px);
+  padding: 0 var(--jaza-space-md, 16px);
+  min-height: 48px;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--jaza-on-surface, #e2e2e2);
+  margin-bottom: var(--jaza-space-md, 16px);
+  outline: none;
+}
+
+.jaza-picker-search::placeholder {
+  color: var(--jaza-on-surface-variant, #bacac5);
+}
+
+.jaza-picker-list {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jaza-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--jaza-space-md, 16px);
+  width: 100%;
+  padding: var(--jaza-space-md, 16px) 0;
+  border: none;
+  border-bottom: 1px solid var(--jaza-outline-variant, #3c4a46);
+  background: transparent;
+  color: var(--jaza-on-surface, #e2e2e2);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.jaza-picker-row[data-selected='true'] {
+  border-bottom-color: var(--jaza-primary-container, #2dd4bf);
+  color: var(--jaza-primary-container, #2dd4bf);
+  font-weight: 600;
+}
+
+.jaza-picker-empty {
+  color: var(--jaza-on-surface-variant, #bacac5);
+  text-align: center;
+  padding: var(--jaza-space-lg, 24px) 0;
+}
+
+.jaza-picker-title {
+  color: var(--jaza-on-surface, #e2e2e2);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 var(--jaza-space-md, 16px);
+}
+
+/* ── Widget / shared utilities ──────────────────────────────────────────── */
+
+.jaza-row {
+  display: flex;
+  align-items: center;
+}
+
+.jaza-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.jaza-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--jaza-space-sm, 8px);
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.jaza-btn:disabled {
+  cursor: not-allowed;
+}
+
+.jaza-btn-primary {
+  background-color: var(--jaza-primary-container, #2dd4bf);
+  color: var(--jaza-on-primary-container, #00574d);
+  border-radius: var(--jaza-radius-full, 9999px);
+  padding: var(--jaza-space-md, 16px) var(--jaza-space-lg, 24px);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.jaza-btn-primary:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.jaza-btn-primary:disabled {
+  opacity: 0.5;
+}
+
+.jaza-btn-muted {
+  background-color: var(--jaza-surface-container-high, #282a2b);
+  color: var(--jaza-on-surface, #e2e2e2);
+  border-radius: var(--jaza-radius-full, 9999px);
+  padding: var(--jaza-space-sm, 8px) var(--jaza-space-xl, 40px);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.jaza-skeleton {
+  background-color: var(--jaza-skeleton, #2a2c2c);
+  overflow: hidden;
+  position: relative;
+}
+
+.jaza-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--jaza-skeleton-highlight, #3a3d3d);
+  animation: jaza-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes jaza-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes jaza-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes jaza-scale-in {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.jaza-spin {
+  animation: jaza-spin 0.9s linear infinite;
+}
+
+.jaza-scale-in {
+  animation: jaza-scale-in 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.jaza-ledger-scroll {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  height: 100%;
+  min-height: 0;
+}

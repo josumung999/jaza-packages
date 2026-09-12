@@ -4,6 +4,8 @@
   "packageManager": "npm@10.9.2",
   "workspaces": [
     "@jaza-node",
+    "@jaza-react",
+    "@jaza-react/example",
     "@jaza-react-native",
     "@jaza-react-native/example"
   ],
