@@ -5,6 +5,9 @@ import '@jazadev/react/styles.css';
 export const metadata = {
   title: 'Jaza React example',
   description: 'Next.js sample for @jazadev/react with local BFF routes',
+  icons: {
+    icon: [{ url: '/icon.svg' }, { url: '/icon.png', sizes: '32x32', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
