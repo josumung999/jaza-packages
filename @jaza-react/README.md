@@ -128,4 +128,4 @@ Customer ids are environment-scoped. When switching `jz_test_*` → `jz_live_*`,
 
 ## Example
 
-See [`example/`](./example) for a Vite demo shell.
+See [`example/`](./example) for a **Next.js** sample with the same flow as the Expo demo (sign-in, `jaza.init`, top-up drawer, consume) using App Router API routes — no external BFF required.

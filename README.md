@@ -13,7 +13,7 @@ This Turborepo hosts publishable Jaza client libraries (starting with `@jazadev/
 | `@jazadev/node` | [`@jaza-node`](./@jaza-node) | Node.js backend SDK |
 | `@jazadev/react` | [`@jaza-react`](./@jaza-react) | React web SDK (Next.js, Remix, Vite) |
 | `@jazadev/react-native` | [`@jaza-react-native`](./@jaza-react-native) | Expo / React Native top-up UI SDK |
-| `@jazadev/react-example` | [`@jaza-react/example`](./@jaza-react/example) | Private Vite sample (not published) |
+| `@jazadev/react-example` | [`@jaza-react/example`](./@jaza-react/example) | Private Next.js sample with local BFF (not published) |
 | `@jazadev/react-native-example` | [`@jaza-react-native/example`](./@jaza-react-native/example) | Private Expo sample (not published) |
 
 ## Scripts
